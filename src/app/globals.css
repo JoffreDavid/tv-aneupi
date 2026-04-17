@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* 1. Establecemos el color principal */
+  --color-primary: #003952;
+  
+  /* 2. Forzamos Arial como la fuente principal del sistema */
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  /* Aplicamos la fuente y el tamaño de párrafo globalmente */
+  body {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    background-color: #f8fafc; /* Fondo suave para el panel */
+    color: #334155; /* Color de texto legible para párrafos */
+  }
+
+  /* Aplicamos el tamaño y color principal a todos los títulos */
+  h1, h2, h3, h4, h5, h6 {
+    font-size: 25px;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
