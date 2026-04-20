@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 // 1. Importamos "Bot" de lucide-react
-import { LayoutDashboard, Newspaper, Tv, LogOut, Settings, Bot } from "lucide-react";
+import { LayoutDashboard, Newspaper, Tv, LogOut, Settings, Bot, Hammer } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Admin ANEUPI",
@@ -47,6 +47,12 @@ export default function RootLayout({
               <Link href="/asistente-virtual" className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
                 <Bot size={20} />
                 <span>Asistente Virtual</span>
+              </Link>
+
+              {/* 2. En desarrollo */}
+              <Link href="/asistente-virtual" className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
+                <Hammer size={20} />
+                <span>En desarrollo</span>
               </Link>
 
               <Link href="/configuracion" className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
