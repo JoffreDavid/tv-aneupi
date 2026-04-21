@@ -50,7 +50,7 @@ export default function RootLayout({
               </Link>
 
               {/* 2. En desarrollo */}
-              <Link href="/asistente-virtual" className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
+              <Link href="/en-desarrollo" className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
                 <Hammer size={20} />
                 <span>En desarrollo</span>
               </Link>
