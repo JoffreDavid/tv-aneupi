@@ -24,6 +24,7 @@ interface Message {
 interface ChatBotProps {
   intencionesData: Intent[];
   botName?: string;
+  onFormSubmit: (data: { tipo: string, usuario: string, contenido: string }) => void;
 }
 
 // --- SUB-COMPONENTES VISUALES (WIDGETS) ---
@@ -69,36 +70,53 @@ const WidgetReproductorTV = () => (
   </div>
 );
 
-const WidgetFormularioEntrevista = () => (
-  <div className="ml-10 mt-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden animate-in slide-in-from-left-4">
-    <div className="bg-[#003952] p-3 text-white flex items-center gap-2">
-        <FileText size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Solicitud de Entrevista</span>
-    </div>
-    <div className="p-4 space-y-3 bg-gray-50/50">
-      <input type="text" placeholder="Nombre Completo" className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
-      <input type="text" placeholder="WhatsApp / Teléfono" className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
-      <button className="w-full bg-[#003952] text-white py-2.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.98]">Enviar Datos</button>
-    </div>
-  </div>
-);
+const WidgetFormularioEntrevista = ({ onFormSubmit }: { onFormSubmit: (data: any) => void }) => {
+  const [form, setForm] = useState({ nombre: '', telefono: '' });
+  
+  const handleSend = () => {
+    if(!form.nombre || !form.telefono) return;
+    onFormSubmit({
+        tipo: 'Entrevista',
+        usuario: form.nombre,
+        contenido: `Solicitud de entrevista. Contacto: ${form.telefono}`
+    });
+  };
 
-const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string) => void }) => {
-  const [form, setForm] = useState({ titulo: '', ubicacion: '', descripcion: '' });
+  return (
+    <div className="ml-10 mt-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden animate-in slide-in-from-left-4">
+      <div className="bg-[#003952] p-3 text-white flex items-center gap-2">
+        <FileText size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Solicitud de Entrevista</span>
+      </div>
+      <div className="p-4 space-y-3 bg-gray-50/50">
+        <input type="text" placeholder="Nombre Completo" value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <input type="text" placeholder="WhatsApp / Teléfono" value={form.telefono} onChange={(e) => setForm({...form, telefono: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <button onClick={handleSend} className="w-full bg-[#003952] text-white py-2.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.98]">Enviar Datos</button>
+      </div>
+    </div>
+  );
+};
+
+const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string, data: any) => void }) => {
+  const [form, setForm] = useState({ remitente: '', titulo: '', ubicacion: '', descripcion: '' });
   const [error, setError] = useState(false);
 
   const handleSubmit = () => {
-    if (!form.titulo.trim() || !form.ubicacion.trim() || !form.descripcion.trim()) {
+    if (!form.remitente.trim() || !form.titulo.trim() || !form.ubicacion.trim() || !form.descripcion.trim()) {
       setError(true);
       return;
     }
     setError(false);
-    onFormSubmit("✅ ¡Gracias! Nuestro personal revisará tu reporte y te daremos una respuesta lo antes posible.");
+    onFormSubmit(
+        "✅ ¡Gracias! Nuestro personal revisará tu reporte y te daremos una respuesta lo antes posible.",
+        form
+    );
   };
 
   return (
     <div className="ml-10 mt-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden animate-in slide-in-from-left-4">
       <div className="bg-[#003952] p-3 text-white flex items-center gap-2"><Camera size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Publicar Noticia / Denuncia</span></div>
       <div className="p-4 space-y-3 bg-gray-50/50">
+        <input type="text" placeholder="Nombre del Remitente" value={form.remitente} onChange={(e) => setForm({...form, remitente: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.remitente ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <input type="text" placeholder="Título o tema central" value={form.titulo} onChange={(e) => setForm({...form, titulo: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.titulo ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <input type="text" placeholder="Ubicación de los hechos" value={form.ubicacion} onChange={(e) => setForm({...form, ubicacion: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.ubicacion ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <textarea placeholder="Describe lo ocurrido detalladamente..." rows={3} value={form.descripcion} onChange={(e) => setForm({...form, descripcion: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.descripcion ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952] resize-none`} />
@@ -111,7 +129,7 @@ const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string)
 
 // --- COMPONENTE PRINCIPAL ---
 
-const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotProps) => {
+const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi", onFormSubmit }: ChatBotProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, sender: "bot", text: `¡Bienvenido a TV ANEUPI! 👋\nSoy ${botName}, tu asistente virtual. Puedes preguntarme sobre la TV en vivo, noticias o escribir "información" para ver opciones.` },
@@ -128,14 +146,12 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
     let type: Message['contentType'] = undefined;
     let customBotText = "";
 
-    // 1. Detección de Menú de Información (Evita el error)
     const esInformacion = ["informacion", "información", "opciones", "ayuda", "menu", "menú"].some(k => inputLower.includes(k));
 
     if (esInformacion) {
       type = "menu_opciones";
       customBotText = "¡Claro! Aquí tienes las opciones principales para ayudarte:";
     } 
-    // 2. Detección de otros Widgets
     else if (inputLower.includes("vivo") || inputLower.includes("señal") || inputLower.includes("streaming")) {
       type = "reproductor_tv";
     } else if (inputLower.includes("entrevista") || inputLower.includes("agendar")) {
@@ -144,12 +160,10 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
       type = "formulario_noticia";
     }
 
-    // 3. Buscar en la data del admin
     const match = intencionesData.find(intent => 
       intent.active && intent.keywords.toLowerCase().split(',').some(k => inputLower.includes(k.trim()))
     );
 
-    // Definir texto final
     const finalBotText = esInformacion 
       ? customBotText 
       : (match ? (match.response || "Cargando respuesta...") : "No entiendo tu consulta, pero intenta con 'información' o 'vivo'.");
@@ -164,8 +178,8 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
     setMessages(prev => [...prev, botMsg]);
   };
 
-  const handleSend = () => {
-    const text = inputValue.trim();
+  const handleSend = (textOverride?: string) => {
+    const text = textOverride || inputValue.trim();
     if (!text) return;
     setMessages(prev => [...prev, { id: Date.now(), sender: "user", text }]);
     setInputValue("");
@@ -174,40 +188,47 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
 
   return (
     <>
-      {/* Botón flotante */}
       <button onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all hover:scale-110 bg-[#003952]">
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
       </button>
 
-      {/* Ventana de Chat */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-[100] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-300 w-[350px] h-[520px]">
-          {/* Header */}
           <div className="p-4 text-white flex items-center gap-3 shrink-0" style={{ backgroundColor: "#003952" }}>
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/10"><Bot size={22} /></div>
             <div className="min-w-0">
               <p className="font-bold text-[15px] leading-tight truncate">{botName}</p>
-              <div className="flex items-center gap-1.5 mt-0.5"><span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]"></span><span className="text-[10px] text-green-400 font-bold uppercase tracking-tighter">En línea ahora</span></div>
+              <div className="flex items-center gap-1.5 mt-0.5"><span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span><span className="text-[10px] text-green-400 font-bold uppercase tracking-tighter">En línea ahora</span></div>
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-[#f8fafc]">
             {messages.map((msg) => (
               <div key={msg.id} className="space-y-1">
                 <ChatMessage sender={msg.sender} text={msg.text} />
                 
                 {msg.contentType === "menu_opciones" && (
-                    <WidgetOpciones onOptionClick={(val) => { setInputValue(val); }} />
+                    <WidgetOpciones onOptionClick={(val) => handleSend(val)} />
                 )}
                 
                 {msg.contentType === "reproductor_tv" && <WidgetReproductorTV />}
                 
-                {msg.contentType === "formulario_entrevista" && <WidgetFormularioEntrevista />}
+                {msg.contentType === "formulario_entrevista" && (
+                    <WidgetFormularioEntrevista onFormSubmit={(data) => {
+                        setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "✅ Solicitud enviada correctamente." }]);
+                        onFormSubmit(data);
+                    }} />
+                )}
                 
                 {msg.contentType === "formulario_noticia" && (
-                  <WidgetFormularioNoticia onFormSubmit={(successMsg) => {
+                  <WidgetFormularioNoticia onFormSubmit={(successMsg, formData) => {
                     setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: successMsg }]);
+                    // Enviamos los datos al panel administrativo
+                    onFormSubmit({
+                        tipo: 'Noticia',
+                        usuario: formData.remitente,
+                        contenido: `[${formData.titulo}] en ${formData.ubicacion}: ${formData.descripcion}`
+                    });
                   }} />
                 )}
               </div>
@@ -215,7 +236,6 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Footer / Input */}
           <div className="p-3 bg-white border-t flex gap-2 items-center">
             <input 
                 type="text" 
@@ -226,7 +246,7 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi" }: ChatBotPro
                 className="flex-1 rounded-full border border-gray-200 px-4 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-[#003952] transition-all" 
             />
             <button 
-                onClick={handleSend} 
+                onClick={() => handleSend()} 
                 className="p-2.5 rounded-full text-white shadow-md bg-[#003952] transition-transform active:scale-90"
             >
                 <Send size={18} />
