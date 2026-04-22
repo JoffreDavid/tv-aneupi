@@ -328,41 +328,7 @@ export default function ArticulosAdminPage() {
 
             </div>
 
-            {/* 3. SECCIÓN INFERIOR: MARCAS CORPORATIVAS */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mt-8 relative">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-[#003952] text-white px-8 py-2 rounded-full font-bold text-[16px] shadow-md">
-                        Marcas Corporativas
-                    </div>
-                </div>
-
-                <button onClick={() => scrollContainer('scroll-brands', 'left')} className="absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 shadow-sm z-10">
-                    <ChevronLeft size={20} />
-                </button>
-                <button onClick={() => scrollContainer('scroll-brands', 'right')} className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 shadow-sm z-10">
-                    <ChevronRight size={20} />
-                </button>
-
-                <div
-                    id="scroll-brands"
-                    ref={carouselBrandsRef}
-                    className="flex gap-6 overflow-x-auto pt-6 pb-2 px-8 snap-x snap-mandatory scrollbar-hide"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                    {brands.map(brand => (
-                        <div key={brand.id} className="relative group snap-start shrink-0">
-                            <div className="w-64 h-32 border-2 border-gray-200 rounded-xl flex items-center justify-center p-2 hover:border-[#003952] transition-colors bg-white">
-                                {/* Reemplazamos el texto por una imagen ajustada */}
-                                <img
-                                    src={brand.logo}
-                                    alt={`Logo de ${brand.name}`}
-                                    className="max-w-full max-h-full object-contain grayscale hover:grayscale-0 transition-all duration-300"
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+    
 
             {/* 4. MODAL PARA CREAR/EDITAR ARTÍCULO */}
             {isModalOpen && (

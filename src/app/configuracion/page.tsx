@@ -1,11 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Lock, Save, CheckCircle } from 'lucide-react';
 
 export default function ConfiguracionPage() {
-  // Estados para el perfil
-  const [nombre, setNombre] = useState('tvaneupi'); // Nombre por defecto
+  // --- ESTADOS PARA EL PERFIL ---
+  // [Backend] Estos valores iniciales deben venir vacíos (''). 
+  // Se debe crear un `useEffect` que haga un GET a `/api/admin/perfil` al cargar la página.
+  // El backend (Node.js) usará Prisma para buscar al usuario actual: 
+  // `prisma.user.findUnique({ where: { id: userId } })` y devolverá el nombre y email.
+  const [nombre, setNombre] = useState('tvaneupi'); 
   const [email, setEmail] = useState('admin@aneupi.com');
   
   // Estados para la contraseña
@@ -17,19 +21,38 @@ export default function ConfiguracionPage() {
   const [mensajeExito, setMensajeExito] = useState('');
 
   // Simulación de guardado de perfil
-  const handleGuardarPerfil = (e: React.FormEvent) => {
+  const handleGuardarPerfil = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // [Backend] Reemplazar esta simulación por un fetch (PUT o PATCH) a `/api/admin/perfil`.
+    // Enviar el payload: { nombre } (El email no se envía porque no es modificable).
+    // El backend debe validar los datos y hacer un `prisma.user.update(...)`.
+    // Mostrar mensaje de éxito solo si el backend responde con status 200.
+    // try {
+    //   const res = await fetch('/api/admin/perfil', { method: 'PATCH', body: JSON.stringify({ nombre }) });
+    //   if (res.ok) setMensajeExito('Perfil actualizado correctamente.');
+    // } catch (error) { ... }
+
     setMensajeExito('Perfil actualizado correctamente.');
     setTimeout(() => setMensajeExito(''), 3000); // Ocultar mensaje después de 3s
   };
 
   // Simulación de cambio de contraseña
-  const handleCambiarPassword = (e: React.FormEvent) => {
+  const handleCambiarPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (nuevaPassword !== confirmarPassword) {
       alert('Las contraseñas nuevas no coinciden.');
       return;
     }
+
+    // [Backend] Reemplazar por un fetch (POST) a `/api/admin/cambiar-password`.
+    // Enviar payload: { passwordActual, nuevaPassword }.
+    // El backend (Node.js) debe:
+    // 1. Buscar al usuario en la BD (Prisma).
+    // 2. Comparar `passwordActual` con el hash guardado usando bcrypt.compare().
+    // 3. Si coincide, encriptar la `nuevaPassword` (bcrypt.hash) y guardarla con `prisma.user.update()`.
+    // 4. Devolver error 401 si la contraseña actual es incorrecta para mostrar un alert() aquí en el frontend.
+
     setMensajeExito('Contraseña actualizada de forma segura.');
     setPasswordActual('');
     setNuevaPassword('');
