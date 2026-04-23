@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, ArrowRight, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, ArrowRight, Search, LayoutDashboard } from 'lucide-react';
 
 // --- INTERFACES ---
 interface NewsItem {
@@ -10,11 +10,12 @@ interface NewsItem {
   title: string;
   description?: string;
   date: string;
-  color?: string; // Para tarjetas normales
-  imageColor?: string; // Para slider
+  color?: string; // Para tarjetas normales (Respaldo)
+  imageColor?: string; // Para slider (Respaldo)
   views?: number;
   likes?: number;
   url?: string;
+  imageUrl?: string; // NUEVO: URL de la imagen
 }
 
 export default function InicioAdminPage() {
@@ -24,11 +25,13 @@ export default function InicioAdminPage() {
   const [featuredNewsList, setFeaturedNewsList] = useState<NewsItem[]>([
     { 
       id: 1, category: 'DEPORTES', title: 'Deporte: victoria histórica en el torneo', 
-      description: 'El equipo nacional consigue una victoria histórica en la final.', date: '11 Oct 2025', imageColor: 'bg-green-800', url: 'https://ejemplo.com/deportes' 
+      description: 'El equipo nacional consigue una victoria histórica en la final.', date: '11 Oct 2025', imageColor: 'bg-green-800', url: 'https://ejemplo.com/deportes',
+      imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1000&auto=format&fit=crop' // Imagen de prueba
     },
     { 
       id: 2, category: 'TECNOLOGÍA', title: 'Nueva IA revoluciona la educación en LATAM', 
-      description: 'Universidades implementan asistentes virtuales para mejorar el rendimiento estudiantil.', date: '12 Oct 2025', imageColor: 'bg-[#003952]' 
+      description: 'Universidades implementan asistentes virtuales para mejorar el rendimiento estudiantil.', date: '12 Oct 2025', imageColor: 'bg-[#003952]',
+      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop' // Imagen de prueba
     },
     { 
       id: 3, category: 'ECONOMÍA', title: 'Crecimiento inesperado en startups locales', 
@@ -37,14 +40,14 @@ export default function InicioAdminPage() {
   ]);
 
   const [masNoticias, setMasNoticias] = useState<NewsItem[]>([
-    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo, se establecieron nuevas normativas de mutuo acuerdo.', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, color: 'bg-slate-700', url: 'https://ejemplo.com/101' },
+    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo, se establecieron nuevas normativas de mutuo acuerdo.', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, color: 'bg-slate-700', url: 'https://ejemplo.com/101', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
     { id: 102, title: 'Indígenas de Imbabura dicen que hay grupos buscando desestabilizar', description: 'Representantes de comunidades manifestaron su preocupación por sectores externos.', category: 'ECUADOR', date: '16 Oct 2025', views: 640, likes: 215, color: 'bg-slate-800' },
     { id: 103, title: 'Ecuador acumula ocho prórrogas sin renovar contratos de telefonía', description: 'Las empresas operan bajo extensiones temporales mientras se define el marco.', category: 'ECUADOR', date: '15 Oct 2025', views: 120, likes: 45, color: 'bg-blue-900' },
     { id: 104, title: 'Nuevas medidas de seguridad en la capital para fin de año', description: 'Las autoridades anuncian un plan estratégico para resguardar a los ciudadanos.', category: 'SEGURIDAD', date: '15 Oct 2025', views: 430, likes: 110, color: 'bg-red-800' },
   ]);
 
   const [otrasNoticias, setOtrasNoticias] = useState<NewsItem[]>([
-    { id: 201, title: 'Mercados asiáticos cierran al alza tras anuncios económicos', description: 'Las principales bolsas reaccionaron positivamente a las políticas fiscales.', category: 'INTERNACIONAL', date: '16 Oct 2025', views: 920, likes: 450, color: 'bg-emerald-800' },
+    { id: 201, title: 'Mercados asiáticos cierran al alza tras anuncios económicos', description: 'Las principales bolsas reaccionaron positivamente a las políticas fiscales.', category: 'INTERNACIONAL', date: '16 Oct 2025', views: 920, likes: 450, color: 'bg-emerald-800', imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=500&auto=format&fit=crop' },
     { id: 202, title: 'Avances prometedores en la cumbre climática global', description: 'Líderes mundiales firman un nuevo tratado para reducir emisiones.', category: 'MEDIO AMBIENTE', date: '15 Oct 2025', views: 780, likes: 310, color: 'bg-teal-700' },
     { id: 203, title: 'Nueva misión espacial anuncia hallazgos en la superficie de Marte', description: 'Imágenes revelan detalles sin precedentes sobre la geología marciana.', category: 'CIENCIA', date: '14 Oct 2025', views: 1200, likes: 890, color: 'bg-indigo-900' },
     { id: 204, title: 'Resultados preliminares de las elecciones europeas', description: 'Se perfila un cambio de tendencia política según los primeros escrutinios.', category: 'POLÍTICA', date: '13 Oct 2025', views: 650, likes: 120, color: 'bg-violet-800' },
@@ -66,7 +69,7 @@ export default function InicioAdminPage() {
   const displayMasNoticias = masNoticias.filter(matchSearch);
   const displayOtrasNoticias = otrasNoticias.filter(matchSearch);
 
-  // Lógica del Slider (usando la lista filtrada)
+  // Lógica del Slider
   const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
   const safeIndex = displayFeaturedList.length > 0 && currentFeaturedIndex >= displayFeaturedList.length ? 0 : currentFeaturedIndex;
   const featuredNews = displayFeaturedList[safeIndex];
@@ -75,7 +78,7 @@ export default function InicioAdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<{news: NewsItem, section: string} | null>(null);
 
-  // --- FUNCIONES DE NAVEGACIÓN SLIDER/CARRUSEL ---
+  // --- FUNCIONES DE NAVEGACIÓN ---
   const scrollContainer = (id: string, direction: 'left' | 'right') => {
     const container = document.getElementById(id);
     if (container) {
@@ -87,10 +90,9 @@ export default function InicioAdminPage() {
   const nextFeatured = () => setCurrentFeaturedIndex((prev) => (prev + 1) % displayFeaturedList.length);
   const prevFeatured = () => setCurrentFeaturedIndex((prev) => (prev === 0 ? displayFeaturedList.length - 1 : prev - 1));
 
-  // Actualiza la búsqueda y resetea el índice del slider
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentFeaturedIndex(0); // Evitar que el slider se rompa al buscar
+    setCurrentFeaturedIndex(0); 
   };
 
   // --- FUNCIONES DE GESTIÓN DE NOTICIAS ---
@@ -117,12 +119,13 @@ export default function InicioAdminPage() {
     const title = formData.get('title') as string;
     const category = formData.get('category') as string;
     const url = formData.get('url') as string;
+    const imageUrl = formData.get('imageUrl') as string;
     const description = formData.get('description') as string;
     const section = formData.get('section') as string;
 
     const newItem: NewsItem = {
       id: editingData ? editingData.news.id : Date.now(),
-      title, category, url, description,
+      title, category, url, description, imageUrl,
       date: editingData?.news.date || new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
       color: editingData?.news.color || 'bg-[#003952]',
       imageColor: editingData?.news.imageColor || 'bg-[#003952]',
@@ -130,14 +133,12 @@ export default function InicioAdminPage() {
       likes: editingData?.news.likes || 0
     };
 
-    // Eliminar de la sección original si estamos editando
     if (editingData) {
       if (editingData.section === 'featured') setFeaturedNewsList(prev => prev.filter(n => n.id !== editingData.news.id));
       if (editingData.section === 'mas') setMasNoticias(prev => prev.filter(n => n.id !== editingData.news.id));
       if (editingData.section === 'otras') setOtrasNoticias(prev => prev.filter(n => n.id !== editingData.news.id));
     }
 
-    // Agregar a la sección seleccionada
     if (section === 'featured') setFeaturedNewsList(prev => [newItem, ...prev]);
     if (section === 'mas') setMasNoticias(prev => [newItem, ...prev]);
     if (section === 'otras') setOtrasNoticias(prev => [newItem, ...prev]);
@@ -151,12 +152,11 @@ export default function InicioAdminPage() {
       {/* CABECERA DE LA PÁGINA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-200 pb-4">
         <div>
-          <h1 className="!text-[28px] !text-[#003952] font-bold tracking-tight">Inicio</h1>
+          <h1 className="!text-[50px] !text-[#003952] font-bold tracking-tight">Inicio</h1>
           <p className="text-[15px] text-gray-500 mt-1">Gestiona la portada principal y el contenido destacado que ven tus usuarios.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          {/* Barra de Búsqueda */}
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -178,14 +178,13 @@ export default function InicioAdminPage() {
       </div>
 
       {/* SECCIÓN SUPERIOR: HERO BANNER Y SIDEBAR */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 ">
         
         {/* Banner Principal Destacado */}
         <div className="lg:col-span-2">
           {displayFeaturedList.length > 0 && featuredNews ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group hover:shadow-md transition-shadow duration-300 h-full">
               
-              {/* Botones de Administrador del Banner */}
               <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                 <button onClick={() => openEditModal(featuredNews, 'featured')} className="bg-white/90 text-[#003952] p-2 rounded-lg hover:bg-white transition-colors shadow-lg" title="Editar Destacado">
                   <Edit size={16} />
@@ -195,8 +194,14 @@ export default function InicioAdminPage() {
                 </button>
               </div>
 
-              <div className={`h-[340px] ${featuredNews.imageColor} relative flex items-center justify-center transition-colors duration-500`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-0"></div>
+              <div className={`h-[340px] ${featuredNews.imageColor} relative flex items-center justify-center transition-colors duration-500 overflow-hidden`}>
+                
+                {/* RENDERIZADO DE IMAGEN (Si existe) */}
+                {featuredNews.imageUrl && (
+                  <img src={featuredNews.imageUrl} alt={featuredNews.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0"></div>
                 <span className="absolute top-5 left-5 bg-red-600 text-white text-[11px] font-bold px-3 py-1.5 uppercase rounded shadow-sm tracking-wider z-10">
                   {featuredNews.category}
                 </span>
@@ -220,10 +225,10 @@ export default function InicioAdminPage() {
                 <p className="text-gray-600 mb-6 text-[15px] leading-relaxed">{featuredNews.description}</p>
                 
                 <div className="flex justify-between items-center mt-auto">
+                  <span className="text-[13px] font-medium text-gray-400">{featuredNews.date}</span>
                   <a href={featuredNews.url || '#'} target={featuredNews.url ? "_blank" : "_self"} rel="noopener noreferrer" className="bg-[#003952] text-white px-6 py-2.5 rounded-full text-[14px] font-bold hover:bg-[#002233] transition-colors shadow-sm flex items-center gap-2">
                     Leer más <ArrowRight size={16} />
                   </a>
-                  <span className="text-[13px] font-medium text-gray-400">{featuredNews.date}</span>
                 </div>
               </div>
             </div>
@@ -266,8 +271,8 @@ export default function InicioAdminPage() {
       </div>
 
       {/* SECCIÓN 1: MÁS NOTICIAS */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div className="mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-black p-2">
+        <div className="mb-6 px-4 pt-4">
           <h3 className="font-bold text-[22px] text-[#003952]">Más Noticias</h3>
         </div>
 
@@ -280,29 +285,35 @@ export default function InicioAdminPage() {
               <ChevronRight size={24} />
             </button>
 
-            <div id="scroll-mas-noticias" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide pt-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div id="scroll-mas-noticias" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide px-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <style dangerouslySetInnerHTML={{__html: `.scrollbar-hide::-webkit-scrollbar { display: none; }`}} />
               
               {displayMasNoticias.map(noticia => (
                 <div key={noticia.id} className="w-80 shrink-0 snap-start bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col relative">
-                  <div className={`h-44 ${noticia.color} relative flex items-center justify-center`}>
-                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm">{noticia.category}</span>
+                  
+                  <div className={`h-30 ${noticia.color} relative flex items-center justify-center overflow-hidden`}>
+                    {/* RENDERIZADO DE IMAGEN */}
+                    {noticia.imageUrl && (
+                      <img src={noticia.imageUrl} alt={noticia.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+                    )}
+                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm z-10">{noticia.category}</span>
                   </div>
+
                   <div className="p-5 flex-1 flex flex-col">
                     <h3 className="font-bold text-[16px] text-gray-900 mb-2 leading-snug line-clamp-2 hover:text-[#003952] transition-colors">{noticia.title}</h3>
                     
-                    {/* AQUÍ SE RENDERIZA EL RESUMEN */}
                     {noticia.description && (
                       <p className="text-[13px] text-gray-500 mb-3 line-clamp-2 leading-relaxed">
                         {noticia.description}
                       </p>
                     )}
 
-                    <p className="text-[12px] text-gray-400 mb-4">{noticia.date}</p>
-                    
-                    <a href={noticia.url || '#'} target={noticia.url ? "_blank" : "_self"} rel="noopener noreferrer" className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-[12px] font-bold hover:bg-[#002233] transition-colors flex items-center gap-1.5 w-fit mt-auto mb-5 shadow-sm">
-                      Leer más <ArrowRight size={14} />
-                    </a>
+                    <div className="flex justify-between items-center mt-auto mb-4">
+                      <p className="text-[12px] text-gray-400">{noticia.date}</p>
+                      <a href={noticia.url || '#'} target={noticia.url ? "_blank" : "_self"} rel="noopener noreferrer" className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-[12px] font-bold hover:bg-[#002233] transition-colors flex items-center gap-1.5 shadow-sm">
+                        Leer más <ArrowRight size={14} />
+                      </a>
+                    </div>
 
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <div className="flex gap-4 text-gray-400 text-[12px] font-medium">
@@ -310,8 +321,8 @@ export default function InicioAdminPage() {
                         <span className="flex gap-1.5 items-center"><Heart size={14}/> {noticia.likes}</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => openEditModal(noticia, 'mas')} className="p-1.5 text-gray-400 hover:text-[#003952] hover:bg-blue-50 rounded transition-colors" title="Editar Noticia"><Edit size={16}/></button>
-                        <button onClick={() => handleDeleteNews(noticia.id, 'mas')} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar Noticia"><Trash2 size={16}/></button>
+                        <button onClick={() => openEditModal(noticia, 'mas')} className="p-1.5 text-gray-400 hover:text-[#003952] hover:bg-blue-50 rounded transition-colors" title="Editar Noticia"><Edit size={20}/></button>
+                        <button onClick={() => handleDeleteNews(noticia.id, 'mas')} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar Noticia"><Trash2 size={20}/></button>
                       </div>
                     </div>
                   </div>
@@ -320,15 +331,15 @@ export default function InicioAdminPage() {
             </div>
           </div>
         ) : (
-          <div className="py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <div className="py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200 m-4">
             <p>No se encontraron resultados en esta sección</p>
           </div>
         )}
       </div>
 
       {/* SECCIÓN 2: NOTICIAS INTERNACIONALES */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div className="mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-black p-2">
+        <div className="mb-6 px-4 pt-4">
           <h3 className="font-bold text-[22px] text-[#003952]">Noticias Internacionales</h3>
         </div>
 
@@ -341,27 +352,33 @@ export default function InicioAdminPage() {
               <ChevronRight size={24} />
             </button>
 
-            <div id="scroll-otras-noticias" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide pt-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div id="scroll-otras-noticias" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide px-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {displayOtrasNoticias.map(noticia => (
                 <div key={noticia.id} className="w-80 shrink-0 snap-start bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col relative">
-                  <div className={`h-44 ${noticia.color} relative flex items-center justify-center`}>
-                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm">{noticia.category}</span>
+                  
+                  <div className={`h-30 ${noticia.color} relative flex items-center justify-center overflow-hidden`}>
+                     {/* RENDERIZADO DE IMAGEN */}
+                    {noticia.imageUrl && (
+                      <img src={noticia.imageUrl} alt={noticia.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+                    )}
+                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm z-10">{noticia.category}</span>
                   </div>
+
                   <div className="p-5 flex-1 flex flex-col">
                     <h3 className="font-bold text-[16px] text-gray-900 mb-2 leading-snug line-clamp-2 hover:text-[#003952] transition-colors">{noticia.title}</h3>
                     
-                    {/* AQUÍ SE RENDERIZA EL RESUMEN */}
                     {noticia.description && (
                       <p className="text-[13px] text-gray-500 mb-3 line-clamp-2 leading-relaxed">
                         {noticia.description}
                       </p>
                     )}
 
-                    <p className="text-[12px] text-gray-400 mb-4">{noticia.date}</p>
-                    
-                    <a href={noticia.url || '#'} target={noticia.url ? "_blank" : "_self"} rel="noopener noreferrer" className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-[12px] font-bold hover:bg-[#002233] transition-colors flex items-center gap-1.5 w-fit mt-auto mb-5 shadow-sm">
-                      Leer más <ArrowRight size={14} />
-                    </a>
+                    <div className="flex justify-between items-center mt-auto mb-4">
+                      <p className="text-[12px] text-gray-400">{noticia.date}</p>
+                      <a href={noticia.url || '#'} target={noticia.url ? "_blank" : "_self"} rel="noopener noreferrer" className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-[12px] font-bold hover:bg-[#002233] transition-colors flex items-center gap-1.5 shadow-sm">
+                        Leer más <ArrowRight size={14} />
+                      </a>
+                    </div>
 
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <div className="flex gap-4 text-gray-400 text-[12px] font-medium">
@@ -369,8 +386,8 @@ export default function InicioAdminPage() {
                         <span className="flex gap-1.5 items-center"><Heart size={14}/> {noticia.likes}</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => openEditModal(noticia, 'otras')} className="p-1.5 text-gray-400 hover:text-[#003952] hover:bg-blue-50 rounded transition-colors" title="Editar Noticia"><Edit size={16}/></button>
-                        <button onClick={() => handleDeleteNews(noticia.id, 'otras')} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar Noticia"><Trash2 size={16}/></button>
+                        <button onClick={() => openEditModal(noticia, 'otras')} className="p-1.5 text-gray-400 hover:text-[#003952] hover:bg-blue-50 rounded transition-colors" title="Editar Noticia"><Edit size={20}/></button>
+                        <button onClick={() => handleDeleteNews(noticia.id, 'otras')} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Eliminar Noticia"><Trash2 size={20}/></button>
                       </div>
                     </div>
                   </div>
@@ -379,7 +396,7 @@ export default function InicioAdminPage() {
             </div>
           </div>
         ) : (
-          <div className="py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <div className="py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200 m-4">
             <p>No se encontraron resultados en esta sección</p>
           </div>
         )}
@@ -416,6 +433,12 @@ export default function InicioAdminPage() {
                     <option value="mas">Más Noticias</option>
                     <option value="otras">Noticias Internacionales</option>
                   </select>
+                </div>
+
+                {/* NUEVO CAMPO: URL DE LA IMAGEN */}
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de la Imagen (Opcional)</label>
+                  <input type="url" name="imageUrl" defaultValue={editingData?.news.imageUrl || ''} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]" placeholder="https://ejemplo.com/imagen.jpg" />
                 </div>
 
                 <div className="md:col-span-2">
