@@ -1,16 +1,22 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { FileText, Search, Clock, User, CheckCircle, AlertCircle, Eye, Download } from 'lucide-react';
+import { 
+  Search, Clock, User, CheckCircle, AlertCircle, 
+  Eye, Download, X, Mail, Tag, MapPin, AlignLeft, Info 
+} from 'lucide-react';
 
 interface FormRecord {
   id: number;
   tipo: 'Noticia' | 'Entrevista';
-  usuario: string;
-  contenido: string;
+  usuario: string; // Remitente
+  contenido: string; // Descripción
   fecha: string;
   hora: string;
   estado: 'Pendiente' | 'Revisado';
+  correo?: string;
+  titulo?: string;
+  ubicacion?: string;
 }
 
 interface UnresolvedFormProps {
@@ -18,11 +24,106 @@ interface UnresolvedFormProps {
   onMarkAsRead: (id: number) => void;
 }
 
+// --- SUB-COMPONENTE: MODAL DE DETALLES ACTUALIZADO ---
+const FormDetailModal = ({ isOpen, onClose, form }: { isOpen: boolean, onClose: () => void, form: FormRecord | null }) => {
+  if (!isOpen || !form) return null;
+
+  const isNoticia = form.tipo === 'Noticia';
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        {/* Header del Modal */}
+        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+          <h2 className="font-bold text-[#003952] flex items-center gap-2 text-lg">
+            <Info size={20} /> Detalles del Formulario
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Cuerpo del Modal */}
+        <div className="p-8 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+                <User size={12}/> Remitente
+              </label>
+              <p className="text-sm font-bold text-gray-700">{form.usuario}</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+                <Tag size={12}/> Categoría
+              </label>
+              <p className="text-sm font-bold text-gray-700">{form.tipo}</p>
+            </div>
+          </div>
+
+          {/* Correo Electrónico: Se muestra para ambos tipos si el dato existe */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+              <Mail size={12}/> Contacto correo electrónico
+            </label>
+            <p className="text-sm font-bold text-gray-700">{form.correo || "No proporcionado"}</p>
+          </div>
+
+          {isNoticia && (
+            /* Campos específicos de Noticia / Denuncia */
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+                  <AlignLeft size={12}/> Título o tema central
+                </label>
+                <p className="text-sm font-bold text-gray-700">{form.titulo || "Sin título"}</p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+                  <MapPin size={12}/> Ubicación de los hechos
+                </label>
+                <p className="text-sm font-bold text-gray-700">{form.ubicacion || "No especificada"}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Descripción detallada */}
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <label className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-2">
+              <AlignLeft size={12} /> Descripción detallada
+            </label>
+            <div className="p-4 bg-gray-50 rounded-xl text-sm text-gray-600 leading-relaxed border border-gray-100 italic whitespace-pre-wrap">
+              "{form.contenido}"
+            </div>
+          </div>
+        </div>
+
+        {/* Footer del Modal */}
+        <div className="p-4 bg-gray-50 border-t flex justify-end">
+          <button 
+            onClick={onClose}
+            className="px-6 py-2 bg-[#003952] text-white rounded-lg text-sm font-bold hover:bg-[#00283d] transition-all shadow-md"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTE PRINCIPAL: UNRESOLVEDFORM ---
 export default function UnresolvedForm({ data, onMarkAsRead }: UnresolvedFormProps) {
   const [filterType, setFilterType] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [selectedForm, setSelectedForm] = useState<FormRecord | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // LÓGICA DE FILTRADO
+  const handleViewDetails = (form: FormRecord) => {
+    setSelectedForm(form);
+    setIsDetailOpen(true);
+  };
+
   const filteredForms = useMemo(() => {
     return data.filter((form) => {
       const matchesType = filterType === 'Todos' || form.tipo === filterType;
@@ -34,8 +135,6 @@ export default function UnresolvedForm({ data, onMarkAsRead }: UnresolvedFormPro
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      
-      {/* SECCIÓN DE FILTROS RÁPIDOS */}
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
         <div className="flex-1 min-w-[200px] space-y-2">
           <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Buscar por usuario o contenido</label>
@@ -69,7 +168,6 @@ export default function UnresolvedForm({ data, onMarkAsRead }: UnresolvedFormPro
         </button>
       </section>
 
-      {/* TABLA DE FORMULARIOS */}
       <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -127,7 +225,11 @@ export default function UnresolvedForm({ data, onMarkAsRead }: UnresolvedFormPro
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button className="p-2 text-gray-400 hover:text-[#003952] hover:bg-gray-100 rounded-lg transition-all" title="Ver detalles">
+                      <button 
+                        onClick={() => handleViewDetails(form)}
+                        className="p-2 text-gray-400 hover:text-[#003952] hover:bg-gray-100 rounded-lg transition-all" 
+                        title="Ver detalles"
+                      >
                         <Eye size={18} />
                       </button>
                       {form.estado === 'Pendiente' && (
@@ -153,6 +255,12 @@ export default function UnresolvedForm({ data, onMarkAsRead }: UnresolvedFormPro
           </table>
         </div>
       </section>
+
+      <FormDetailModal 
+        isOpen={isDetailOpen} 
+        onClose={() => setIsDetailOpen(false)} 
+        form={selectedForm} 
+      />
     </div>
   );
 }

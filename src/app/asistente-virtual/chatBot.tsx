@@ -24,7 +24,14 @@ interface Message {
 interface ChatBotProps {
   intencionesData: Intent[];
   botName?: string;
-  onFormSubmit: (data: { tipo: string, usuario: string, contenido: string }) => void;
+  onFormSubmit: (data: { 
+    tipo: string, 
+    usuario: string, 
+    contenido: string, 
+    correo?: string, 
+    titulo?: string, 
+    ubicacion?: string 
+  }) => void;
 }
 
 // --- SUB-COMPONENTES VISUALES (WIDGETS) ---
@@ -70,15 +77,23 @@ const WidgetReproductorTV = () => (
   </div>
 );
 
+// --- FORMULARIO DE ENTREVISTA ACTUALIZADO ---
+// --- WIDGET FORMULARIO ENTREVISTA ACTUALIZADO ---
 const WidgetFormularioEntrevista = ({ onFormSubmit }: { onFormSubmit: (data: any) => void }) => {
-  const [form, setForm] = useState({ nombre: '', telefono: '' });
-  
+  const [form, setForm] = useState({ remitente: '', correo: '', descripcion: '' });
+  const [error, setError] = useState(false);
+
   const handleSend = () => {
-    if(!form.nombre || !form.telefono) return;
+    if(!form.remitente.trim() || !form.correo.trim() || !form.descripcion.trim()) {
+      setError(true);
+      return;
+    }
+    setError(false);
     onFormSubmit({
         tipo: 'Entrevista',
-        usuario: form.nombre,
-        contenido: `Solicitud de entrevista. Contacto: ${form.telefono}`
+        usuario: form.remitente,
+        correo: form.correo, // Aseguramos que se envíe esta propiedad
+        contenido: form.descripcion
     });
   };
 
@@ -88,27 +103,31 @@ const WidgetFormularioEntrevista = ({ onFormSubmit }: { onFormSubmit: (data: any
         <FileText size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Solicitud de Entrevista</span>
       </div>
       <div className="p-4 space-y-3 bg-gray-50/50">
-        <input type="text" placeholder="Nombre Completo" value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
-        <input type="text" placeholder="WhatsApp / Teléfono" value={form.telefono} onChange={(e) => setForm({...form, telefono: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <input type="text" placeholder="Remitente (Nombre Completo)" value={form.remitente} onChange={(e) => setForm({...form, remitente: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.remitente ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
+        {/* Campo de Correo Electrónico */}
+        <input type="email" placeholder="Correo electrónico de contacto" value={form.correo} onChange={(e) => setForm({...form, correo: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.correo ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
+        <textarea placeholder="Descripción del tema..." rows={3} value={form.descripcion} onChange={(e) => setForm({...form, descripcion: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.descripcion ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952] resize-none`} />
+        {error && <p className="text-[9px] text-red-500 font-bold animate-pulse">* Por favor, completa todos los campos.</p>}
         <button onClick={handleSend} className="w-full bg-[#003952] text-white py-2.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.98]">Enviar Datos</button>
       </div>
     </div>
   );
 };
 
+// --- WIDGET FORMULARIO NOTICIA ACTUALIZADO ---
 const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string, data: any) => void }) => {
-  const [form, setForm] = useState({ remitente: '', titulo: '', ubicacion: '', descripcion: '' });
+  const [form, setForm] = useState({ remitente: '', correo: '', titulo: '', ubicacion: '', descripcion: '' });
   const [error, setError] = useState(false);
 
   const handleSubmit = () => {
-    if (!form.remitente.trim() || !form.titulo.trim() || !form.ubicacion.trim() || !form.descripcion.trim()) {
+    if (!form.remitente.trim() || !form.correo.trim() || !form.titulo.trim() || !form.ubicacion.trim() || !form.descripcion.trim()) {
       setError(true);
       return;
     }
     setError(false);
     onFormSubmit(
         "✅ ¡Gracias! Nuestro personal revisará tu reporte y te daremos una respuesta lo antes posible.",
-        form
+        form // Este objeto ahora incluye 'correo'
     );
   };
 
@@ -117,6 +136,8 @@ const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string,
       <div className="bg-[#003952] p-3 text-white flex items-center gap-2"><Camera size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Publicar Noticia / Denuncia</span></div>
       <div className="p-4 space-y-3 bg-gray-50/50">
         <input type="text" placeholder="Nombre del Remitente" value={form.remitente} onChange={(e) => setForm({...form, remitente: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.remitente ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
+        {/* Nuevo campo de Correo para Noticias */}
+        <input type="email" placeholder="Tu correo electrónico" value={form.correo} onChange={(e) => setForm({...form, correo: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.correo ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <input type="text" placeholder="Título o tema central" value={form.titulo} onChange={(e) => setForm({...form, titulo: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.titulo ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <input type="text" placeholder="Ubicación de los hechos" value={form.ubicacion} onChange={(e) => setForm({...form, ubicacion: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.ubicacion ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952]`} />
         <textarea placeholder="Describe lo ocurrido detalladamente..." rows={3} value={form.descripcion} onChange={(e) => setForm({...form, descripcion: e.target.value})} className={`w-full p-2.5 bg-white border ${error && !form.descripcion ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs outline-none focus:border-[#003952] resize-none`} />
@@ -214,20 +235,31 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi", onFormSubmit
                 {msg.contentType === "reproductor_tv" && <WidgetReproductorTV />}
                 
                 {msg.contentType === "formulario_entrevista" && (
-                    <WidgetFormularioEntrevista onFormSubmit={(data) => {
-                        setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "✅ Solicitud enviada correctamente." }]);
-                        onFormSubmit(data);
-                    }} />
+                  <WidgetFormularioEntrevista onFormSubmit={(formData) => {
+                    setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "✅ Solicitud enviada correctamente." }]);
+                    
+                    // Al pasar formData directamente, asegúrate de que el widget 
+                    // incluya: { tipo, usuario, correo, contenido }
+                    onFormSubmit({
+                      ...formData,
+                      tipo: 'Entrevista' // Forzamos el tipo por seguridad
+                    });
+                  }} />
                 )}
                 
                 {msg.contentType === "formulario_noticia" && (
                   <WidgetFormularioNoticia onFormSubmit={(successMsg, formData) => {
                     setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: successMsg }]);
-                    // Enviamos los datos al panel administrativo
+                    
                     onFormSubmit({
-                        tipo: 'Noticia',
-                        usuario: formData.remitente,
-                        contenido: `[${formData.titulo}] en ${formData.ubicacion}: ${formData.descripcion}`
+                      tipo: 'Noticia',
+                      usuario: formData.remitente,
+                      correo: formData.correo,
+                      // Guardamos estos para el modal de detalles
+                      titulo: formData.titulo,
+                      ubicacion: formData.ubicacion,
+                      // Concatenamos para que se vea bien en la vista previa de la tabla
+                      contenido: `[${formData.titulo.toUpperCase()}] - DETALLE: ${formData.descripcion}`
                     });
                   }} />
                 )}

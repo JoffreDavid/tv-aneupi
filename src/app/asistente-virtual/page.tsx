@@ -7,17 +7,15 @@ import { ShieldCheck, Plus, Bot, FileText, MessageSquare } from 'lucide-react';
 import IntentsModal from './intetsmodal';
 import UnresolvedTab from './unresolvedTab';
 import IntentsTab from './intentsTab';
-import UnresolvedForm from './unresolvedForm'; // Componente para la tabla de formularios
+import UnresolvedForm from './unresolvedForm'; 
 import ChatBot from './chatBot';
 
 export default function AsistenteVirtualAdmin() {
-  // Pestañas: 'intents', 'unresolved', 'forms'
   const [activeTab, setActiveTab] = useState<'intents' | 'unresolved' | 'forms'>('intents');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedData, setSelectedData] = useState<any>(null);
   
-  // Estado para la notificación (Toast)
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('Los cambios se guardaron correctamente.');
 
@@ -30,19 +28,27 @@ export default function AsistenteVirtualAdmin() {
     { id: 5, label: '11', name: '11', keywords: 'cual, años', priority: 1, responses: 1, response: 'El bot tiene 1 año de funcionamiento.', active: true },
   ]);
 
-  // --- ESTADO DE FORMULARIOS RECIBIDOS ---
+  // --- ESTADO DE FORMULARIOS RECIBIDOS (Estructura Extendida) ---
   const [formulariosRecibidos, setFormulariosRecibidos] = useState<any[]>([
-    { id: 1, tipo: 'Noticia', usuario: 'Andrés López', contenido: 'Denuncia sobre baches en la vía principal.', fecha: '21/04/2026', hora: '10:30', estado: 'Revisado' },
-    { id: 2, tipo: 'Entrevista', usuario: 'Dra. Ana Rivas', contenido: 'Entrevista sobre salud mental.', fecha: '22/04/2026', hora: '09:15', estado: 'Pendiente' },
+    { 
+      id: 1, 
+      tipo: 'Noticia', 
+      usuario: 'Andrés López', 
+      correo: 'andres@ejemplo.com', 
+      titulo: 'Baches en la vía', 
+      ubicacion: 'Av. Amazonas', 
+      contenido: 'Denuncia sobre baches en la vía principal.', 
+      fecha: '21/04/2026', 
+      hora: '10:30', 
+      estado: 'Revisado' 
+    },
   ]);
 
-  // Función para manejar formularios enviados desde el ChatBot
-  const handleFormReceived = (datos: { tipo: string, usuario: string, contenido: string }) => {
+  // FUNCIÓN ACTUALIZADA: Recibe todos los campos del ChatBot
+  const handleFormReceived = (datos: any) => {
     const nuevoFormulario = {
+      ...datos, // Captura automáticamente: tipo, usuario, correo, contenido, titulo, ubicacion
       id: Date.now(),
-      tipo: datos.tipo,
-      usuario: datos.usuario,
-      contenido: datos.contenido,
       fecha: new Date().toLocaleDateString('es-ES'),
       hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       estado: 'Pendiente'
@@ -122,7 +128,7 @@ export default function AsistenteVirtualAdmin() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
           <main className="space-y-6">
-            {/* SELECTOR DE PESTAÑAS (3 Pestañas) */}
+            {/* SELECTOR DE PESTAÑAS */}
             <div className="flex gap-6 border-b border-gray-200 overflow-x-auto">
               <button 
                 onClick={() => setActiveTab('intents')} 
@@ -144,47 +150,35 @@ export default function AsistenteVirtualAdmin() {
               </button>
             </div>
 
-            {/* CONTENIDO DINÁMICO */}
             <div className="min-h-[400px]">
               {activeTab === 'intents' && (
-                <IntentsTab 
-                  data={intenciones} 
-                  onEdit={(item) => handleOpenModal('edit', item)} 
-                  onToggleStatus={handleToggleStatus}
-                />
+                <IntentsTab data={intenciones} onEdit={(item) => handleOpenModal('edit', item)} onToggleStatus={handleToggleStatus} />
               )}
 
               {activeTab === 'forms' && (
-                <UnresolvedForm 
-                  data={formulariosRecibidos} 
-                  onMarkAsRead={handleMarkFormAsRead}
-                />
+                <UnresolvedForm data={formulariosRecibidos} onMarkAsRead={handleMarkFormAsRead} />
               )}
 
               {activeTab === 'unresolved' && (
-                <UnresolvedTab 
-                  onCreateIntent={(msg) => handleOpenModal('create', { label: '', name: '', keywords: msg, active: true })} 
-                />
+                <UnresolvedTab onCreateIntent={(msg) => handleOpenModal('create', { label: '', name: '', keywords: msg, active: true })} />
               )}
             </div>
           </main>
 
-          {/* BARRA LATERAL (ASIDE) */}
           <aside className="space-y-6">
-            {/* Resumen de actividad - Solo visible cuando estamos en la pestaña de Formularios */}
             {activeTab === 'forms' && (
               <section className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-right-4">
                 <h3 className="text-sm font-bold text-[#003952] mb-3 flex items-center gap-2">
                   <ShieldCheck size={16} /> Resumen de actividad
                 </h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">Total Intenciones</span>
-                    <span className="text-xs font-bold">{intenciones.length}</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400">Total Intenciones</span>
+                    <span className="font-bold">{intenciones.length}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">Pendientes Revisión</span>
-                    <span className="text-xs font-bold text-red-500">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-400">Pendientes Revisión</span>
+                    <span className="font-bold text-red-500">
                       {formulariosRecibidos.filter(f => f.estado === 'Pendiente').length}
                     </span>
                   </div>
@@ -219,22 +213,10 @@ export default function AsistenteVirtualAdmin() {
         </div>
       </div>
 
-      {/* CHATBOT */}
-      <ChatBot 
-        intencionesData={intenciones} 
-        onFormSubmit={handleFormReceived} 
-      />
+      <ChatBot intencionesData={intenciones} onFormSubmit={handleFormReceived} />
 
-      {/* MODAL GLOBAL */}
-      <IntentsModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={handleSave}
-        mode={modalMode}
-        data={selectedData}
-      />
+      <IntentsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} mode={modalMode} data={selectedData} />
 
-      {/* NOTIFICACIÓN TOAST */}
       {showToast && (
         <div className="fixed bottom-10 right-10 bg-white border border-gray-100 shadow-2xl rounded-xl p-4 flex flex-col min-w-[250px] z-[200] animate-in slide-in-from-right duration-300">
           <p className="text-sm font-bold text-gray-800">Operación exitosa</p>
