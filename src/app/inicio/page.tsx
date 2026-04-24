@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, ArrowRight, Search, LayoutDashboard } from 'lucide-react';
+import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, ArrowRight, Search } from 'lucide-react';
 
 // --- INTERFACES ---
 interface NewsItem {
@@ -149,13 +149,25 @@ export default function InicioAdminPage() {
   return (
     <div className="space-y-10 relative">
       
-      {/* CABECERA DE LA PÁGINA */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-200 pb-4">
-        <div>
-          <h1 className="!text-[50px] !text-[#003952] font-bold tracking-tight">Inicio</h1>
-          <p className="text-[15px] text-gray-500 mt-1">Gestiona la portada principal y el contenido destacado que ven tus usuarios.</p>
+     {/* CABECERA DE LA PÁGINA */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
+        
+        {/* TÍTULO MEJORADO CON ACENTO AZUL */}
+        <div className="flex flex-col">
+          <div className="flex items-center gap-4">
+            {/* Barra lateral de acento (Borde azul redondeado) */}
+            <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
+            <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">
+              Inicio
+            </h1>
+          </div>
+          {/* El margen izquierdo (ml-[26px]) alinea el texto con la palabra "Inicio", saltándose la barra */}
+          <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">
+            Gestiona la portada principal y el contenido destacado que ven tus usuarios.
+          </p>
         </div>
         
+        {/* BUSCADOR Y BOTÓN (Sin modificaciones de posición) */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
