@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Share2, Eye, Heart, MessageCircle, Calendar, User, ArrowRight } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Share2, Eye, Heart, MessageCircle, Calendar, User, ArrowRight, BookOpen } from 'lucide-react';
 
 // --- INTERFACES ---
 interface Article {
@@ -16,6 +16,7 @@ interface Article {
     comments: number;
     imageColor: string;
     url: string;
+    imageUrl?: string; // NUEVO: URL de la imagen
 }
 
 interface Trending {
@@ -39,13 +40,15 @@ export default function ArticulosAdminPage() {
             id: 1, title: 'Comprobación para ver si usa estos datos',
             description: 'Un análisis profundo sobre cómo la IA está transformando los sectores productivos en la región y las oportunidades que...',
             category: 'TECNOLOGÍA', author: 'María González', date: '15 Oct 2025',
-            views: 1234, likes: 89, comments: 23, imageColor: 'bg-blue-900', url: 'https://ejemplo.com/1'
+            views: 1234, likes: 89, comments: 23, imageColor: 'bg-blue-900', url: 'https://ejemplo.com/1',
+            imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=500&auto=format&fit=crop'
         },
         {
             id: 2, title: 'Startups de Tecnología: Casos de Éxito en la Región',
             description: 'Historias de startups que escalaron y las lecciones clave para emprendedores tech en LATAM.',
             category: 'TECNOLOGÍA', author: 'Diego Herrera', date: '08 Oct 2025',
-            views: 842, likes: 47, comments: 10, imageColor: 'bg-slate-800', url: 'https://ejemplo.com/2'
+            views: 842, likes: 47, comments: 10, imageColor: 'bg-slate-800', url: 'https://ejemplo.com/2',
+            imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=500&auto=format&fit=crop'
         },
         {
             id: 3, title: 'Ciberseguridad para PYMES: Buenas prácticas',
@@ -57,13 +60,15 @@ export default function ArticulosAdminPage() {
             id: 5, title: 'El futuro del desarrollo Web con Next.js',
             description: 'Explorando las nuevas características de React y cómo mejoran el rendimiento de las aplicaciones empresariales.',
             category: 'TECNOLOGÍA', author: 'Joffre', date: '12 Oct 2025',
-            views: 2100, likes: 150, comments: 34, imageColor: 'bg-blue-800', url: 'https://ejemplo.com/5'
+            views: 2100, likes: 150, comments: 34, imageColor: 'bg-blue-800', url: 'https://ejemplo.com/5',
+            imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=500&auto=format&fit=crop'
         },
         {
             id: 4, title: 'Sostenibilidad: El Desafío Ambiental del Siglo XXI',
             description: 'Exploramos las iniciativas más innovadoras en sostenibilidad que están cambiando el mundo corporativo.',
             category: 'MEDIO AMBIENTE', author: 'Ana Silva', date: '02 Oct 2025',
-            views: 1540, likes: 120, comments: 45, imageColor: 'bg-green-700', url: 'https://ejemplo.com/4'
+            views: 1540, likes: 120, comments: 45, imageColor: 'bg-green-700', url: 'https://ejemplo.com/4',
+            imageUrl: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?q=80&w=500&auto=format&fit=crop'
         },
         {
             id: 6, title: 'Inflación y su impacto en las startups',
@@ -80,13 +85,13 @@ export default function ArticulosAdminPage() {
     ]);
 
     const [brands, setBrands] = useState<Brand[]>([
-    { id: 1, name: 'ANEUPI', logo: '/logos/aneupi.jpeg' }, // Si no tienes imagen, deja el texto o pon un placeholder
-    { id: 2, name: 'AGALE', logo: '/logos/agale.jpeg' },
-    { id: 3, name: 'Gatito Plis', logo: '/logos/gatitopls.jpeg' },
-    { id: 4, name: 'TVANEUPI', logo: '/logos/tvaneupi.jpeg' },
-    { id: 5, name: 'Universidad LECENI', logo: '/logos/leceni.jpeg' },
-    { id: 6, name: 'BANCO ANEUPI', logo: '/logos/bancoaneupi.jpeg' }
-]);
+        { id: 1, name: 'ANEUPI', logo: '/logos/aneupi.jpeg' }, 
+        { id: 2, name: 'AGALE', logo: '/logos/agale.jpeg' },
+        { id: 3, name: 'Gatito Plis', logo: '/logos/gatitopls.jpeg' },
+        { id: 4, name: 'TVANEUPI', logo: '/logos/tvaneupi.jpeg' },
+        { id: 5, name: 'Universidad LECENI', logo: '/logos/leceni.jpeg' },
+        { id: 6, name: 'BANCO ANEUPI', logo: '/logos/bancoaneupi.jpeg' }
+    ]);
 
     const carouselBrandsRef = useRef<HTMLDivElement>(null);
 
@@ -127,19 +132,20 @@ export default function ArticulosAdminPage() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const title = formData.get('title') as string;
-        const author = formData.get('author') as string; // <-- Capturamos el autor
+        const author = formData.get('author') as string; 
         const category = formData.get('category') as string;
         const description = formData.get('description') as string;
         const url = formData.get('url') as string;
+        const imageUrl = formData.get('imageUrl') as string; // Capturamos la URL de la imagen
 
         if (selectedArticle) {
             setArticles(articles.map(a =>
-                a.id === selectedArticle.id ? { ...a, title, author, category, description, url } : a
+                a.id === selectedArticle.id ? { ...a, title, author, category, description, url, imageUrl } : a
             ));
         } else {
             const nuevoArticulo: Article = {
-                id: Date.now(), title, category, description, url,
-                author: author || 'Super Usuario', // Usa el ingresado o por defecto
+                id: Date.now(), title, category, description, url, imageUrl,
+                author: author || 'Super Usuario', 
                 date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
                 views: 0, likes: 0, comments: 0, imageColor: 'bg-[#003952]'
             };
@@ -167,26 +173,43 @@ export default function ArticulosAdminPage() {
         <div className="space-y-10 relative">
             <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
 
-            {/* 1. CABECERA: TÍTULO Y BÚSQUEDA */}
-            <div className="flex flex-col gap-4 border-b border-gray-200 pb-4">
-                <h1 className="!text-[25px] !text-[#003952] font-bold">Artículos</h1>
-                <p className="text-[14px] text-gray-500">Lee y comparte artículos de opinión, análisis y reportajes en profundidad</p>
-
-                <div className="flex justify-between items-center w-full">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white" size={16} />
+           {/* 1. CABECERA DE LA PÁGINA */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
+                
+                {/* TÍTULO MEJORADO CON ACENTO AZUL E ÍCONO */}
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-4">
+                        {/* Barra lateral de acento (Borde azul redondeado) */}
+                        <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
+                        <div className="flex items-center gap-3">
+                            <BookOpen size={34} className="text-[#003952]" strokeWidth={2.5} />
+                            <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">
+                                Artículos
+                            </h1>
+                        </div>
+                    </div>
+                    {/* El margen izquierdo alinea el texto saltándose la barra */}
+                    <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">
+                        Lee y gestiona artículos de opinión, análisis y reportajes en profundidad.
+                    </p>
+                </div>
+                
+                {/* BUSCADOR Y BOTÓN (Alineados a la derecha) */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Buscar"
+                            placeholder="Buscar artículo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-32 pl-9 pr-4 py-2 bg-[#003952] text-white placeholder-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 text-[14px]"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] transition-shadow shadow-sm"
                         />
                     </div>
 
                     <button
                         onClick={openAddModal}
-                        className="bg-[#003952] text-white px-4 py-2 rounded-lg hover:bg-[#002233] transition-colors flex items-center gap-2 text-[14px] font-medium"
+                        className="w-full sm:w-auto bg-[#003952] text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-[#002233] transition-colors whitespace-nowrap"
                     >
                         <Plus size={18} /> Agregar artículo
                     </button>
@@ -225,10 +248,20 @@ export default function ArticulosAdminPage() {
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                                 >
                                     {catArticles.map(article => (
-                                        <div key={article.id} className="w-80 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group relative">
+                                        <div key={article.id} className="w-60 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group relative">
 
-                                            <div className={`h-40 ${article.imageColor} relative flex items-center justify-center opacity-90`}>
-                                                <button className="absolute top-3 right-3 bg-[#003952] bg-opacity-80 p-1.5 rounded-full text-white hover:bg-opacity-100 transition">
+                                            <div className={`h-20 ${article.imageColor} relative flex items-center justify-center opacity-90 overflow-hidden`}>
+                                                
+                                                {/* IMAGEN DEL ARTÍCULO */}
+                                                {article.imageUrl && (
+                                                    <>
+                                                        <img src={article.imageUrl} alt={article.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+                                                        {/* Filtro oscuro leve para resaltar el botón de compartir */}
+                                                        <div className="absolute inset-0 bg-black/10 z-0"></div> 
+                                                    </>
+                                                )}
+
+                                                <button className="absolute top-3 right-3 bg-[#003952] bg-opacity-80 p-1.5 rounded-full text-white hover:bg-opacity-100 transition z-10">
                                                     <Share2 size={14} />
                                                 </button>
                                             </div>
@@ -357,7 +390,7 @@ export default function ArticulosAdminPage() {
                                     />
                                 </div>
 
-                                {/* Autor (Nueva adición) */}
+                                {/* Autor */}
                                 <div>
                                     <label className="block text-gray-700 font-medium mb-1 text-[14px]">Autor</label>
                                     <input
@@ -385,9 +418,21 @@ export default function ArticulosAdminPage() {
                                     </select>
                                 </div>
 
+                                {/* NUEVO CAMPO: URL DE LA IMAGEN */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de la Imagen (Opcional)</label>
+                                    <input
+                                        type="url"
+                                        name="imageUrl"
+                                        defaultValue={selectedArticle?.imageUrl || ''}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                    />
+                                </div>
+
                                 {/* URL ocupa las 2 columnas */}
                                 <div className="md:col-span-2">
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de Redirección</label>
+                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de Redirección (Leer más)</label>
                                     <input
                                         type="url"
                                         name="url"

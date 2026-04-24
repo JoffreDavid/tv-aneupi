@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, ArrowRight, Search } from 'lucide-react';
 
 // --- INTERFACES ---
@@ -19,40 +19,43 @@ interface NewsItem {
 }
 
 export default function InicioAdminPage() {
+  // --- LÓGICA DE SESIÓN Y AUTENTICACIÓN ---
+  // [Backend - Seguridad] Aquí se deberá integrar el contexto de sesión (ej: useSession).
+  // Solo los usuarios con rol de ADMIN o EDITOR deberían poder interactuar con los botones 
+  // de Crear, Editar y Eliminar.
+
   // --- ESTADOS ---
   const [searchTerm, setSearchTerm] = useState('');
 
+  // [Backend - Fetching]
+  // Los siguientes estados iniciales deben estar vacíos `[]`.
+  // Se requiere un `useEffect` que haga un GET a `/api/admin/noticias` al montar el componente.
+  // El Backend (Prisma) debería devolver las noticias clasificadas. Podría ser algo como:
+  // `prisma.news.findMany({ orderBy: { createdAt: 'desc' } })`
+  // Y en el front se filtran por "sección", o el backend ya las envía separadas.
+  
   const [featuredNewsList, setFeaturedNewsList] = useState<NewsItem[]>([
     { 
       id: 1, category: 'DEPORTES', title: 'Deporte: victoria histórica en el torneo', 
       description: 'El equipo nacional consigue una victoria histórica en la final.', date: '11 Oct 2025', imageColor: 'bg-green-800', url: 'https://ejemplo.com/deportes',
-      imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1000&auto=format&fit=crop' // Imagen de prueba
+      imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1000&auto=format&fit=crop'
     },
-    { 
-      id: 2, category: 'TECNOLOGÍA', title: 'Nueva IA revoluciona la educación en LATAM', 
-      description: 'Universidades implementan asistentes virtuales para mejorar el rendimiento estudiantil.', date: '12 Oct 2025', imageColor: 'bg-[#003952]',
-      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop' // Imagen de prueba
-    },
-    { 
-      id: 3, category: 'ECONOMÍA', title: 'Crecimiento inesperado en startups locales', 
-      description: 'El ecosistema emprendedor muestra números verdes tras el último trimestre.', date: '13 Oct 2025', imageColor: 'bg-amber-700' 
-    }
+    // ... más datos simulados
   ]);
 
   const [masNoticias, setMasNoticias] = useState<NewsItem[]>([
     { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo, se establecieron nuevas normativas de mutuo acuerdo.', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, color: 'bg-slate-700', url: 'https://ejemplo.com/101', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
-    { id: 102, title: 'Indígenas de Imbabura dicen que hay grupos buscando desestabilizar', description: 'Representantes de comunidades manifestaron su preocupación por sectores externos.', category: 'ECUADOR', date: '16 Oct 2025', views: 640, likes: 215, color: 'bg-slate-800' },
-    { id: 103, title: 'Ecuador acumula ocho prórrogas sin renovar contratos de telefonía', description: 'Las empresas operan bajo extensiones temporales mientras se define el marco.', category: 'ECUADOR', date: '15 Oct 2025', views: 120, likes: 45, color: 'bg-blue-900' },
-    { id: 104, title: 'Nuevas medidas de seguridad en la capital para fin de año', description: 'Las autoridades anuncian un plan estratégico para resguardar a los ciudadanos.', category: 'SEGURIDAD', date: '15 Oct 2025', views: 430, likes: 110, color: 'bg-red-800' },
+    // ... más datos simulados
   ]);
 
   const [otrasNoticias, setOtrasNoticias] = useState<NewsItem[]>([
     { id: 201, title: 'Mercados asiáticos cierran al alza tras anuncios económicos', description: 'Las principales bolsas reaccionaron positivamente a las políticas fiscales.', category: 'INTERNACIONAL', date: '16 Oct 2025', views: 920, likes: 450, color: 'bg-emerald-800', imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=500&auto=format&fit=crop' },
-    { id: 202, title: 'Avances prometedores en la cumbre climática global', description: 'Líderes mundiales firman un nuevo tratado para reducir emisiones.', category: 'MEDIO AMBIENTE', date: '15 Oct 2025', views: 780, likes: 310, color: 'bg-teal-700' },
-    { id: 203, title: 'Nueva misión espacial anuncia hallazgos en la superficie de Marte', description: 'Imágenes revelan detalles sin precedentes sobre la geología marciana.', category: 'CIENCIA', date: '14 Oct 2025', views: 1200, likes: 890, color: 'bg-indigo-900' },
-    { id: 204, title: 'Resultados preliminares de las elecciones europeas', description: 'Se perfila un cambio de tendencia política según los primeros escrutinios.', category: 'POLÍTICA', date: '13 Oct 2025', views: 650, likes: 120, color: 'bg-violet-800' },
+    // ... más datos simulados
   ]);
 
+  // [Backend - Fetching] Sidebar (Opcional)
+  // Si estos elementos del sidebar también serán dinámicos, se necesita una tabla en BD 
+  // (ej: `SidebarItem`) y un endpoint GET `/api/admin/sidebar`.
   const [sidebarItems] = useState([
     { id: 1, title: '¡Consigue trabajo!', desc: 'Explora oportunidades relevantes ahora.' },
     { id: 2, title: 'Conferencia', desc: 'Congreso Internacional ANEUPI.' },
@@ -96,8 +99,19 @@ export default function InicioAdminPage() {
   };
 
   // --- FUNCIONES DE GESTIÓN DE NOTICIAS ---
-  const handleDeleteNews = (id: number, section: string) => {
+  
+  const handleDeleteNews = async (id: number, section: string) => {
     if (!confirm('¿Estás seguro de eliminar esta noticia?')) return;
+    
+    // [Backend - Delete]
+    // Reemplazar por un fetch DELETE a `/api/admin/noticias?id=${id}`.
+    // El backend debe validar permisos y ejecutar: `prisma.news.delete({ where: { id } })`.
+    // Manejar el UI (actualizar estados locales) solo si `res.ok` es verdadero.
+    // try {
+    //    const res = await fetch(`/api/admin/noticias/${id}`, { method: 'DELETE' });
+    //    if (!res.ok) throw new Error('Error al eliminar');
+    // } catch (err) { alert('Hubo un error'); return; }
+
     if (section === 'featured') setFeaturedNewsList(prev => prev.filter(n => n.id !== id));
     if (section === 'mas') setMasNoticias(prev => prev.filter(n => n.id !== id));
     if (section === 'otras') setOtrasNoticias(prev => prev.filter(n => n.id !== id));
@@ -113,19 +127,38 @@ export default function InicioAdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveNews = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveNews = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const title = formData.get('title') as string;
-    const category = formData.get('category') as string;
-    const url = formData.get('url') as string;
-    const imageUrl = formData.get('imageUrl') as string;
-    const description = formData.get('description') as string;
-    const section = formData.get('section') as string;
+    
+    // Payload extraído del formulario
+    const payload = {
+      title: formData.get('title') as string,
+      category: formData.get('category') as string,
+      url: formData.get('url') as string,
+      imageUrl: formData.get('imageUrl') as string,
+      description: formData.get('description') as string,
+      section: formData.get('section') as string, // El backend deberá guardar la sección ('featured', 'mas', 'otras')
+    };
+
+    // [Backend - Create/Update]
+    // Aquí se debe determinar si es una creación (POST) o edición (PUT/PATCH).
+    // const method = editingData ? 'PATCH' : 'POST';
+    // const endpoint = editingData ? `/api/admin/noticias/${editingData.news.id}` : '/api/admin/noticias';
+    //
+    // try {
+    //    const res = await fetch(endpoint, {
+    //      method,
+    //      headers: { 'Content-Type': 'application/json' },
+    //      body: JSON.stringify(payload)
+    //    });
+    //    const savedNews = await res.json();
+    //    // Luego de guardar, usar `savedNews` para actualizar el estado local en vez del newItem simulado.
+    // } catch (err) { ... }
 
     const newItem: NewsItem = {
       id: editingData ? editingData.news.id : Date.now(),
-      title, category, url, description, imageUrl,
+      ...payload,
       date: editingData?.news.date || new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
       color: editingData?.news.color || 'bg-[#003952]',
       imageColor: editingData?.news.imageColor || 'bg-[#003952]',
@@ -139,9 +172,9 @@ export default function InicioAdminPage() {
       if (editingData.section === 'otras') setOtrasNoticias(prev => prev.filter(n => n.id !== editingData.news.id));
     }
 
-    if (section === 'featured') setFeaturedNewsList(prev => [newItem, ...prev]);
-    if (section === 'mas') setMasNoticias(prev => [newItem, ...prev]);
-    if (section === 'otras') setOtrasNoticias(prev => [newItem, ...prev]);
+    if (payload.section === 'featured') setFeaturedNewsList(prev => [newItem, ...prev]);
+    if (payload.section === 'mas') setMasNoticias(prev => [newItem, ...prev]);
+    if (payload.section === 'otras') setOtrasNoticias(prev => [newItem, ...prev]);
 
     setIsModalOpen(false);
   };
@@ -149,7 +182,7 @@ export default function InicioAdminPage() {
   return (
     <div className="space-y-10 relative">
       
-     {/* CABECERA DE LA PÁGINA */}
+      {/* CABECERA DE LA PÁGINA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
         
         {/* TÍTULO MEJORADO CON ACENTO AZUL */}

@@ -4,11 +4,19 @@ import { useState, useEffect } from 'react';
 import { User, Lock, Save, CheckCircle } from 'lucide-react';
 
 export default function ConfiguracionPage() {
+  // --- LÓGICA DE SESIÓN (PRÓXIMAMENTE) ---
+  // [Frontend/Backend] Aquí se deberá consumir el contexto de autenticación (ej: NextAuth o un JWT decodificado).
+  // Se necesita obtener el ID del usuario logueado para que el backend sepa a quién actualizar.
+  // const { data: session } = useSession(); 
+  // const userId = session?.user?.id;
+
   // --- ESTADOS PARA EL PERFIL ---
   // [Backend] Estos valores iniciales deben venir vacíos (''). 
   // Se debe crear un `useEffect` que haga un GET a `/api/admin/perfil` al cargar la página.
-  // El backend (Node.js) usará Prisma para buscar al usuario actual: 
-  // `prisma.user.findUnique({ where: { id: userId } })` y devolverá el nombre y email.
+  // El endpoint debe:
+  // 1. Validar el token/sesión del usuario solicitante.
+  // 2. Usar Prisma: `prisma.user.findUnique({ where: { id: userId }, select: { nombre: true, email: true } })`.
+  // 3. Devolver un JSON con esos datos.
   const [nombre, setNombre] = useState('tvaneupi'); 
   const [email, setEmail] = useState('admin@aneupi.com');
   
@@ -17,20 +25,33 @@ export default function ConfiguracionPage() {
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [confirmarPassword, setConfirmarPassword] = useState('');
 
-  // Estado para notificaciones visuales
+  // Estado para notificaciones visuales y carga
   const [mensajeExito, setMensajeExito] = useState('');
+  // [Frontend/Backend] Es buena práctica agregar un estado `isLoading` para deshabilitar los botones 
+  // mientras el backend procesa la petición y evitar doble envío.
 
   // Simulación de guardado de perfil
   const handleGuardarPerfil = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // [Backend] Reemplazar esta simulación por un fetch (PUT o PATCH) a `/api/admin/perfil`.
-    // Enviar el payload: { nombre } (El email no se envía porque no es modificable).
-    // El backend debe validar los datos y hacer un `prisma.user.update(...)`.
-    // Mostrar mensaje de éxito solo si el backend responde con status 200.
+    // [Backend] Reemplazar esta simulación por un fetch (PATCH o PUT) a `/api/admin/perfil`.
+    // [Backend - Seguridad] El endpoint DEBE:
+    // 1. Verificar la autenticación del usuario.
+    // 2. Validar el body (que `nombre` sea un string válido y no esté vacío).
+    // 3. Actualizar en BD: `prisma.user.update({ where: { id: userId }, data: { nombre } })`.
+    // 4. Retornar status 200 en éxito, o 400/500 en error.
+    
     // try {
-    //   const res = await fetch('/api/admin/perfil', { method: 'PATCH', body: JSON.stringify({ nombre }) });
-    //   if (res.ok) setMensajeExito('Perfil actualizado correctamente.');
+    //   const res = await fetch('/api/admin/perfil', { 
+    //     method: 'PATCH', 
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ nombre }) 
+    //   });
+    //   if (res.ok) {
+    //      setMensajeExito('Perfil actualizado correctamente.');
+    //   } else {
+    //      // Manejar error mostrado por el backend
+    //   }
     // } catch (error) { ... }
 
     setMensajeExito('Perfil actualizado correctamente.');
@@ -40,6 +61,8 @@ export default function ConfiguracionPage() {
   // Simulación de cambio de contraseña
   const handleCambiarPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validación local
     if (nuevaPassword !== confirmarPassword) {
       alert('Las contraseñas nuevas no coinciden.');
       return;
@@ -47,11 +70,15 @@ export default function ConfiguracionPage() {
 
     // [Backend] Reemplazar por un fetch (POST) a `/api/admin/cambiar-password`.
     // Enviar payload: { passwordActual, nuevaPassword }.
-    // El backend (Node.js) debe:
-    // 1. Buscar al usuario en la BD (Prisma).
-    // 2. Comparar `passwordActual` con el hash guardado usando bcrypt.compare().
-    // 3. Si coincide, encriptar la `nuevaPassword` (bcrypt.hash) y guardarla con `prisma.user.update()`.
-    // 4. Devolver error 401 si la contraseña actual es incorrecta para mostrar un alert() aquí en el frontend.
+    // [Backend - Seguridad] El backend DEBE realizar estos pasos estrictamente:
+    // 1. Autenticación: Verificar que la petición venga de un usuario logueado.
+    // 2. Validación de fuerza: Aunque el HTML dice minLength={8}, el backend DEBE validar que `nuevaPassword` tenga >= 8 caracteres.
+    // 3. Buscar al usuario: `prisma.user.findUnique({ where: { id: userId } })`.
+    // 4. Comparación: Usar `bcrypt.compare(passwordActual, user.passwordHash)`.
+    //    - Si es FALSO: Devolver status 401 (No autorizado) con mensaje "Contraseña actual incorrecta".
+    // 5. Encriptación: Si es verdadero, hashear la nueva: `const newHash = await bcrypt.hash(nuevaPassword, 10)`.
+    // 6. Guardar: `prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } })`.
+    // 7. Retornar status 200 (Éxito).
 
     setMensajeExito('Contraseña actualizada de forma segura.');
     setPasswordActual('');

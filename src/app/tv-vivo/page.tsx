@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink } from 'lucide-react';
+import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // --- INTERFACES PARA TYPESCRIPT ---
 interface Comment {
@@ -19,11 +19,12 @@ interface Channel {
   viewers: number;
   isLive: boolean;
   image: string;
-  url: string; // <-- Nueva propiedad agregada
+  url: string; 
 }
 
 export default function TvVivoAdminPage() {
   // --- ESTADOS SIMULADOS ---
+  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
   const [isStreaming, setIsStreaming] = useState(true);
 
   const [comments, setComments] = useState<Comment[]>([
@@ -37,11 +38,18 @@ export default function TvVivoAdminPage() {
     { id: 1, title: 'ANEUPI Noticias 24/7', category: 'Noticias', viewers: 2500, isLive: true, image: 'bg-blue-900', url: 'https://youtube.com' },
     { id: 2, title: 'Deportes en Vivo', category: 'Deportes', viewers: 1800, isLive: true, image: 'bg-green-900', url: '' },
     { id: 3, title: 'Cultura y Entretenimiento', category: 'Cultura', viewers: 950, isLive: false, image: 'bg-purple-900', url: '' },
+    { id: 4, title: 'Cine Independiente', category: 'Entretenimiento', viewers: 420, isLive: true, image: 'bg-indigo-900', url: '' },
   ]);
 
   // --- ESTADOS DEL MODAL ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+
+  // --- LÓGICA DE BÚSQUEDA ---
+  const filteredChannels = channels.filter(channel => 
+    channel.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    channel.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // --- FUNCIONES DE ACCIÓN (SALA DE CONTROL) ---
   const toggleStream = () => setIsStreaming(!isStreaming);
@@ -71,20 +79,16 @@ export default function TvVivoAdminPage() {
 
   const handleGuardarCanal = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Obtenemos los valores del formulario
     const formData = new FormData(e.currentTarget);
     const title = formData.get('title') as string;
     const category = formData.get('category') as string;
-    const url = formData.get('url') as string; // <-- Capturamos la URL
+    const url = formData.get('url') as string;
 
     if (selectedChannel) {
-      // Editar existente incluyendo la URL
       setChannels(channels.map(c =>
         c.id === selectedChannel.id ? { ...c, title, category, url } : c
       ));
     } else {
-      // Crear nuevo incluyendo la URL
       const nuevoCanal: Channel = {
         id: Date.now(),
         title,
@@ -96,25 +100,74 @@ export default function TvVivoAdminPage() {
       };
       setChannels([...channels, nuevoCanal]);
     }
-
     setIsModalOpen(false);
   };
 
+  // --- FUNCIÓN PARA DESPLAZAMIENTO (SCROLL) ---
+  const scrollContainer = (id: string, direction: 'left' | 'right') => {
+    const container = document.getElementById(id);
+    if (container) {
+      const scrollAmount = 350;
+      container.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
-    <div className="space-y-8 relative">
-      {/* TÍTULO DE LA SECCIÓN */}
-      <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-        <Radio className="text-[#003952]" size={30} />
-        <h1>Control de Transmisión (TV en Vivo)</h1>
+    <div className="space-y-10 relative">
+      <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
+      
+      {/* 1. CABECERA DE LA PÁGINA  */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
+        
+      
+        <div className="flex flex-col">
+          <div className="flex items-center gap-4">
+            {/* Barra lateral de acento */}
+            <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
+            <div className="flex items-center gap-3">
+              <Radio size={34} className="text-[#003952]" strokeWidth={2.5} />
+              <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">
+                TV en Vivo
+              </h1>
+            </div>
+          </div>
+          <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">
+            Controla la transmisión principal, modera el chat y gestiona los canales.
+          </p>
+        </div>
+        
+        {/* BUSCADOR Y BOTÓN AGREGAR */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar canal..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] transition-shadow shadow-sm"
+            />
+          </div>
+
+          <button
+            onClick={openAddModal}
+            className="w-full sm:w-auto bg-[#003952] text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-[#002233] transition-colors whitespace-nowrap"
+          >
+            <Plus size={18} /> Agregar Canal
+          </button>
+        </div>
       </div>
 
       {/* BLOQUE 1: SALA DE CONTROL Y MODERACIÓN */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h2 className="!text-lg">Transmisión Principal</h2>
-            <div className="flex items-center gap-2 text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-              <Users size={16} /> 2,500 Espectadores
+            <h2 className="!text-[18px] font-bold text-[#003952]">Transmisión Principal</h2>
+            <div className="flex items-center gap-2 text-[12px] font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
+              <Users size={14} /> 2,500 Espectadores
             </div>
           </div>
 
@@ -127,7 +180,7 @@ export default function TvVivoAdminPage() {
             ) : (
               <div className="text-center text-gray-500">
                 <Square size={48} className="mx-auto mb-4" />
-                <p className="text-xl">TRANSMISIÓN PAUSADA</p>
+                <p className="text-xl font-bold">TRANSMISIÓN PAUSADA</p>
               </div>
             )}
           </div>
@@ -135,22 +188,22 @@ export default function TvVivoAdminPage() {
           <div className="p-4 bg-white flex gap-4">
             <button
               onClick={toggleStream}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors text-[14px] ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
             >
-              {isStreaming ? <><Square size={20} /> DETENER STREAM</> : <><Play size={20} /> INICIAR STREAM</>}
+              {isStreaming ? <><Square size={18} /> DETENER STREAM</> : <><Play size={18} /> INICIAR STREAM</>}
             </button>
           </div>
         </div>
 
         {/* Panel de Moderación */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[500px]">
           <div className="p-4 border-b border-gray-100 bg-[#003952] text-white rounded-t-xl">
-            <h2 className="!text-lg !text-white flex items-center gap-2">
-              <MessageSquareX size={20} /> Comentarios
+            <h2 className="!text-[16px] font-bold !text-white flex items-center gap-2">
+              <MessageSquareX size={18} /> Comentarios en Vivo
             </h2>
           </div>
 
-          <div className="p-4 flex-1 overflow-y-auto space-y-4">
+          <div className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[420px]">
             {comments.map(comment => (
               <div key={comment.id} className="group relative bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-red-200 transition-colors">
                 <div className="flex justify-between items-start mb-1">
@@ -159,7 +212,7 @@ export default function TvVivoAdminPage() {
                   </span>
                   <span className="text-[10px] text-gray-400">{comment.time}</span>
                 </div>
-                <p className="text-gray-600">{comment.text}</p>
+                <p className="text-[13px] text-gray-600">{comment.text}</p>
 
                 <button
                   onClick={() => deleteComment(comment.id)}
@@ -170,75 +223,89 @@ export default function TvVivoAdminPage() {
                 </button>
               </div>
             ))}
-            {comments.length === 0 && <p className="text-center text-gray-400 mt-10">Chat vacío</p>}
+            {comments.length === 0 && <p className="text-center text-gray-400 mt-10 text-[14px]">Chat vacío</p>}
           </div>
         </div>
       </div>
 
       {/* BLOQUE 2: GESTIÓN DE CANALES */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2>Gestión de Canales</h2>
-          <button
-            onClick={openAddModal}
-            className="bg-[#003952] text-white px-4 py-2 rounded-lg hover:bg-[#002233] transition-colors flex items-center gap-2 text-[14px]"
-          >
-            <Plus size={18} /> Agregar Canal
-          </button>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="mb-6">
+          <h2 className="!text-[22px] font-bold text-[#003952]">Catálogo de Canales</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {channels.map(channel => (
-            <div key={channel.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group">
+        {filteredChannels.length > 0 ? (
+          <div className="relative group">
+            {/* FLECHAS DE NAVEGACIÓN */}
+            <button onClick={() => scrollContainer('scroll-canales', 'left')} className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 p-3 bg-white border border-gray-200 rounded-full text-[#003952] shadow-lg hover:bg-gray-50 transition-all opacity-0 group-hover:opacity-100 hidden md:block">
+              <ChevronLeft size={24} />
+            </button>
+            <button onClick={() => scrollContainer('scroll-canales', 'right')} className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 p-3 bg-white border border-gray-200 rounded-full text-[#003952] shadow-lg hover:bg-gray-50 transition-all opacity-0 group-hover:opacity-100 hidden md:block">
+              <ChevronRight size={24} />
+            </button>
 
-              {/* MINIATURA CON ENLACE CLICKEABLE */}
-              <a
-                href={channel.url || '#'}
-                target={channel.url ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                className={`h-32 ${channel.image} relative flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer`}
-                title={channel.url ? "Abrir transmisión en nueva pestaña" : "Sin URL configurada"}
-              >
-                {channel.isLive && (
-                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">EN VIVO</span>
-                )}
-                {/* Ícono play que aparece al pasar el ratón para indicar que es clickeable */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 w-12 h-12 rounded-full flex items-center justify-center">
-                  <Play size={24} className="text-white ml-1" />
-                </div>
-              </a>
+            {/* CONTENEDOR CON SCROLL */}
+            <div id="scroll-canales" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide pt-2 px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {filteredChannels.map(channel => (
+                <div key={channel.id} className="w-80 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group hover:shadow-md hover:-translate-y-1 transition-all">
 
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="flex justify-between items-start">
-                  <h3 className="!text-[18px] text-[#003952] mb-1 truncate pr-2" title={channel.title}>{channel.title}</h3>
-                  {channel.url && (
-                    <span title="Tiene URL" className="flex-shrink-0 mt-1">
-                      <ExternalLink size={14} className="text-gray-400" />
-                    </span>
-                  )}
-                </div>
-                <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mb-4 w-fit">
-                  {channel.category}
-                </span>
-
-                <div className="flex gap-2 mt-auto">
-                  <button
-                    onClick={() => openEditModal(channel)}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors text-[14px]"
+                  {/* MINIATURA CON ENLACE CLICKEABLE */}
+                  <a
+                    href={channel.url || '#'}
+                    target={channel.url ? "_blank" : "_self"}
+                    rel="noopener noreferrer"
+                    className={`h-32 ${channel.image} relative flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer`}
+                    title={channel.url ? "Abrir transmisión en nueva pestaña" : "Sin URL configurada"}
                   >
-                    <Edit size={16} /> Editar
-                  </button>
-                  <button
-                    onClick={() => deleteChannel(channel.id)}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded transition-colors text-[14px]"
-                  >
-                    <Trash2 size={16} /> Eliminar
-                  </button>
+                    {channel.isLive && (
+                      <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm tracking-wider">EN VIVO</span>
+                    )}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 w-12 h-12 rounded-full flex items-center justify-center">
+                      <Play size={24} className="text-white ml-1" />
+                    </div>
+                  </a>
+
+                  <div className="p-4 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-bold text-[16px] text-[#003952] mb-1 truncate pr-2" title={channel.title}>{channel.title}</h3>
+                      {channel.url && (
+                        <span title="Tiene URL" className="flex-shrink-0 mt-1">
+                          <ExternalLink size={14} className="text-gray-400" />
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center mb-5 mt-1">
+                      <span className="inline-block bg-gray-100 text-gray-600 text-[11px] font-medium px-2 py-1 rounded">
+                        {channel.category}
+                      </span>
+                      <span className="text-[12px] text-gray-400 flex items-center gap-1"><Users size={12}/> {channel.viewers}</span>
+                    </div>
+
+                    <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => openEditModal(channel)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-50 hover:bg-[#003952] hover:text-white text-gray-600 rounded transition-colors text-[13px] font-medium"
+                      >
+                        <Edit size={14} /> Editar
+                      </button>
+                      <button
+                        onClick={() => deleteChannel(channel.id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 rounded transition-colors text-[13px] font-medium"
+                      >
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+           <div className="py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <p>No se encontraron canales con "{searchTerm}"</p>
+          </div>
+        )}
       </div>
 
       {/* MODAL DE GESTIÓN DE CANALES */}
@@ -247,12 +314,12 @@ export default function TvVivoAdminPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden animate-in fade-in duration-200">
 
             <div className="p-6 border-b border-gray-100 bg-gray-50">
-              <h2 className="!text-[25px] !text-[#003952] font-bold">
+              <h2 className="!text-[22px] !text-[#003952] font-bold">
                 {selectedChannel ? 'Editar Canal' : 'Agregar Nuevo Canal'}
               </h2>
             </div>
 
-            <form onSubmit={handleGuardarCanal} className="p-6 space-y-4">
+            <form onSubmit={handleGuardarCanal} className="p-6 space-y-5">
               <div>
                 <label className="block text-gray-700 font-medium mb-1 text-[14px]">Nombre del Canal</label>
                 <input
@@ -283,18 +350,18 @@ export default function TvVivoAdminPage() {
                 <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de la Señal (Stream)</label>
                 <input
                   type="url"
-                  name="url" // <-- Nombre clave para capturarlo en el FormData
-                  defaultValue={selectedChannel?.url || ''} // <-- Carga la URL si estás editando
+                  name="url"
+                  defaultValue={selectedChannel?.url || ''}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
                   placeholder="https://ejemplo.com/stream"
                 />
               </div>
 
-              <div className="flex gap-3 mt-6 pt-4">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-[14px]"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-[14px] font-medium"
                 >
                   Cancelar
                 </button>
