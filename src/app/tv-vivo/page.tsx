@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink, Search, ChevronLeft, ChevronRight, Pin, Send } from 'lucide-react';
 
 // --- INTERFACES PARA TYPESCRIPT ---
 interface Comment {
@@ -27,12 +27,15 @@ export default function TvVivoAdminPage() {
   const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
   const [isStreaming, setIsStreaming] = useState(true);
 
+  // Estados para el Chat
   const [comments, setComments] = useState<Comment[]>([
-    { id: 1, user: 'ANEUPI Noticias', text: 'Última hora: Nuevas medidas...', time: 'Hace 2 min', isModerator: true },
+    { id: 1, user: 'ANEUPI Noticias', text: 'Última hora: Nuevas medidas implementadas.', time: 'Hace 2 min', isModerator: true },
     { id: 2, user: 'Maria López', text: 'Excelente cobertura de las noticias', time: 'Hace 8 min' },
     { id: 3, user: 'Carlos Pérez', text: 'Muy informativo el segmento.', time: 'Hace 10 min' },
     { id: 4, user: 'Usuario Troll', text: 'Este canal es una pérdida de tiempo xd', time: 'Hace 11 min' },
   ]);
+  const [newComment, setNewComment] = useState('');
+  const [pinnedCommentId, setPinnedCommentId] = useState<number | null>(1); // El id 1 fijado por defecto para la demostración
 
   const [channels, setChannels] = useState<Channel[]>([
     { id: 1, title: 'ANEUPI Noticias 24/7', category: 'Noticias', viewers: 2500, isLive: true, image: 'bg-blue-900', url: 'https://youtube.com' },
@@ -51,13 +54,35 @@ export default function TvVivoAdminPage() {
     channel.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // --- FUNCIONES DE ACCIÓN (SALA DE CONTROL) ---
+  // --- FUNCIONES DE ACCIÓN (SALA DE CONTROL Y CHAT) ---
   const toggleStream = () => setIsStreaming(!isStreaming);
 
   const deleteComment = (id: number) => {
     if (confirm('¿Eliminar este comentario del chat público?')) {
       setComments(comments.filter(c => c.id !== id));
+      if (pinnedCommentId === id) setPinnedCommentId(null); // Quitar el fijado si se elimina
     }
+  };
+
+  const togglePinComment = (id: number) => {
+    // Si ya está fijado, lo desfija. Si no, lo fija.
+    setPinnedCommentId(prevId => prevId === id ? null : id);
+  };
+
+  const handleSendComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const commentToAdd: Comment = {
+      id: Date.now(),
+      user: 'Admin ANEUPI', // Usuario por defecto del admin
+      text: newComment,
+      time: 'Justo ahora',
+      isModerator: true
+    };
+
+    setComments([commentToAdd, ...comments]); // Agrega el mensaje al principio de la lista
+    setNewComment('');
   };
 
   // --- FUNCIONES DE GESTIÓN DE CANALES ---
@@ -119,13 +144,10 @@ export default function TvVivoAdminPage() {
     <div className="space-y-10 relative">
       <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
       
-      {/* 1. CABECERA DE LA PÁGINA  */}
+      {/* 1. CABECERA DE LA PÁGINA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
-        
-      
         <div className="flex flex-col">
           <div className="flex items-center gap-4">
-            {/* Barra lateral de acento */}
             <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
             <div className="flex items-center gap-3">
               <Radio size={34} className="text-[#003952]" strokeWidth={2.5} />
@@ -163,7 +185,9 @@ export default function TvVivoAdminPage() {
 
       {/* BLOQUE 1: SALA DE CONTROL Y MODERACIÓN */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        
+        {/* Transmisión Principal */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
           <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
             <h2 className="!text-[18px] font-bold text-[#003952]">Transmisión Principal</h2>
             <div className="flex items-center gap-2 text-[12px] font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
@@ -171,7 +195,7 @@ export default function TvVivoAdminPage() {
             </div>
           </div>
 
-          <div className={`aspect-video flex flex-col items-center justify-center transition-colors ${isStreaming ? 'bg-slate-800' : 'bg-black'}`}>
+          <div className={`flex-1 flex flex-col items-center justify-center transition-colors min-h-[300px] ${isStreaming ? 'bg-slate-800' : 'bg-black'}`}>
             {isStreaming ? (
               <div className="text-center text-white">
                 <Radio size={48} className="mx-auto mb-4 animate-pulse text-red-500" />
@@ -188,43 +212,95 @@ export default function TvVivoAdminPage() {
           <div className="p-4 bg-white flex gap-4">
             <button
               onClick={toggleStream}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors text-[14px] ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors text-[14px] shadow-sm ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
             >
               {isStreaming ? <><Square size={18} /> DETENER STREAM</> : <><Play size={18} /> INICIAR STREAM</>}
             </button>
           </div>
         </div>
 
-        {/* Panel de Moderación */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[500px]">
+        {/* Panel de Moderación (Chat) */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
           <div className="p-4 border-b border-gray-100 bg-[#003952] text-white rounded-t-xl">
             <h2 className="!text-[16px] font-bold !text-white flex items-center gap-2">
-              <MessageSquareX size={18} /> Comentarios en Vivo
+              <MessageSquareX size={18} /> Comentarios
             </h2>
           </div>
 
-          <div className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[420px]">
+          {/* SECCIÓN DEL COMENTARIO FIJADO */}
+          {pinnedCommentId && comments.find(c => c.id === pinnedCommentId) && (
+            <div className="p-3 bg-blue-50 border-b border-blue-100 relative">
+              <div className="flex items-center gap-1 text-[#003952] text-[11px] font-bold mb-1 uppercase tracking-wider">
+                <Pin size={12} fill="currentColor" /> Mensaje Fijado
+              </div>
+              <p className="text-[13px] text-gray-800 pr-6">
+                <span className="font-bold mr-1">{comments.find(c => c.id === pinnedCommentId)?.user}:</span>
+                {comments.find(c => c.id === pinnedCommentId)?.text}
+              </p>
+              <button 
+                onClick={() => setPinnedCommentId(null)} 
+                className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors"
+                title="Desfijar mensaje"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* LISTA DE COMENTARIOS */}
+          <div className="p-4 flex-1 overflow-y-auto space-y-3">
             {comments.map(comment => (
-              <div key={comment.id} className="group relative bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-red-200 transition-colors">
+              <div key={comment.id} className={`group relative p-3 rounded-lg border transition-colors ${comment.isModerator ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50 border-gray-100 hover:border-gray-200'}`}>
                 <div className="flex justify-between items-start mb-1">
-                  <span className={`font-bold text-[12px] ${comment.isModerator ? 'text-[#003952]' : 'text-gray-700'}`}>
-                    {comment.user} {comment.isModerator && '(Admin)'}
+                  <span className={`font-bold text-[12px] flex items-center gap-1 ${comment.isModerator ? 'text-[#003952]' : 'text-gray-700'}`}>
+                    {comment.user} {comment.isModerator && <span className="bg-[#003952] text-white text-[9px] px-1.5 py-0.5 rounded uppercase">Admin</span>}
                   </span>
                   <span className="text-[10px] text-gray-400">{comment.time}</span>
                 </div>
-                <p className="text-[13px] text-gray-600">{comment.text}</p>
+                <p className="text-[13px] text-gray-600 pr-10">{comment.text}</p>
 
-                <button
-                  onClick={() => deleteComment(comment.id)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-100 text-red-600 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
-                  title="Eliminar comentario"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {/* BOTONES DE ACCIÓN FLOTANTES */}
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => togglePinComment(comment.id)}
+                    className={`p-1.5 rounded transition-colors ${pinnedCommentId === comment.id ? 'bg-[#003952] text-white' : 'bg-white text-gray-400 hover:text-[#003952] shadow-sm'}`}
+                    title={pinnedCommentId === comment.id ? "Desfijar" : "Fijar mensaje"}
+                  >
+                    <Pin size={14} />
+                  </button>
+                  <button
+                    onClick={() => deleteComment(comment.id)}
+                    className="p-1.5 bg-white text-red-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
+                    title="Eliminar comentario"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             ))}
             {comments.length === 0 && <p className="text-center text-gray-400 mt-10 text-[14px]">Chat vacío</p>}
           </div>
+
+          {/* CAJA PARA ESCRIBIR MENSAJE COMO ADMIN */}
+          <div className="p-3 border-t border-gray-100 bg-white rounded-b-xl">
+            <form onSubmit={handleSendComment} className="flex gap-2">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Escribe como administrador..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#003952]"
+              />
+              <button 
+                type="submit" 
+                disabled={!newComment.trim()}
+                className="bg-[#003952] text-white px-3 py-2 rounded-lg hover:bg-[#002233] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <Send size={16} />
+              </button>
+            </form>
+          </div>
+
         </div>
       </div>
 
