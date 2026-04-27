@@ -18,7 +18,7 @@ interface Message {
   id: number;
   sender: "bot" | "user";
   text: string;
-  contentType?: 'reproductor_tv' | 'formulario_entrevista' | 'formulario_noticia' | 'menu_opciones';
+  contentType?: 'reproductor_tv' | 'formulario_entrevista' | 'formulario_noticia' | 'menu_opciones' | 'formulario_stream';
 }
 
 interface ChatBotProps {
@@ -41,7 +41,8 @@ const WidgetOpciones = ({ onOptionClick }: { onOptionClick: (val: string) => voi
     { label: "📺 Ver TV en Vivo", value: "vivo" },
     { label: "📝 Agendar Entrevista", value: "entrevista" },
     { label: "📢 Publicar Noticia", value: "noticia" },
-    { label: "📞 Publicar Denuncia", value: "denuncia" }
+    { label: "📞 Publicar Denuncia", value: "denuncia" },
+    { label: "🚀 Promocionar Stream", value: "promocionar" }
   ];
   return (
     <div className="ml-10 mt-2 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-left-2 max-w-[280px]">
@@ -138,6 +139,57 @@ const WidgetFormularioNoticia = ({ onFormSubmit }: { onFormSubmit: (msg: string,
     </div>
   );
 };
+
+// --- WIDGET ACTUALIZADO: FORMULARIO PROMOCIÓN DE STREAM ---
+const WidgetFormularioStream = ({ onFormSubmit }: { onFormSubmit: (data: any) => void }) => {
+  const [form, setForm] = useState({ nombres: '', correo: '', canal: '', plataforma: 'Twitch', descripcion: '', enlace: '' });
+  const [error, setError] = useState(false);
+
+  const handleSend = () => {
+    // Validación de todos los campos según requerimiento
+    if(!form.nombres.trim() || !form.correo.trim() || !form.canal.trim() || !form.descripcion.trim() || !form.enlace.trim()) {
+      setError(true);
+      return;
+    }
+    setError(false);
+    
+    // Se envía la data con el formato exacto para FormularioStream.tsx
+    onFormSubmit({
+        tipo: 'Promocion Stream',
+        usuario: form.nombres, 
+        correo: form.correo,
+        contenido: `CANAL: ${form.canal} | PLATAfORMA: ${form.plataforma} | LINK: ${form.enlace} | CONTENIDO: ${form.descripcion}`
+    });
+  };
+
+  return (
+    <div className="ml-10 mt-2 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden animate-in slide-in-from-left-4">
+      <div className="bg-[#003952] p-3 text-white flex items-center gap-2">
+        <Play size={14} /><span className="text-[11px] font-bold uppercase tracking-tight">Promociona tu Stream (Gratis)</span>
+      </div>
+      <div className="p-4 space-y-3 bg-gray-50/50">
+        <input type="text" placeholder="Nombres" value={form.nombres} onChange={(e) => setForm({...form, nombres: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <input type="email" placeholder="Correo electrónico" value={form.correo} onChange={(e) => setForm({...form, correo: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <input type="text" placeholder="Nombre de tu Canal" value={form.canal} onChange={(e) => setForm({...form, canal: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        
+        <select value={form.plataforma} onChange={(e) => setForm({...form, plataforma: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]">
+          <option value="Twitch">Twitch</option>
+          <option value="YouTube">YouTube</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Otro">Otro</option>
+        </select>
+
+        <input type="url" placeholder="Enlace de tu stream (ej: twitch.tv/usuario)" value={form.enlace} onChange={(e) => setForm({...form, enlace: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952]" />
+        <textarea placeholder="¿Qué contenido transmites?" rows={2} value={form.descripcion} onChange={(e) => setForm({...form, descripcion: e.target.value})} className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-[#003952] resize-none" />
+        
+        {error && <p className="text-[10px] text-red-500 font-bold animate-pulse">Debes llenar todos los campos</p>}
+        <button onClick={handleSend} className="w-full bg-[#003952] text-white py-2.5 rounded-lg text-[11px] font-bold active:scale-[0.98]">Enviar Solicitud</button>
+      </div>
+    </div>
+  );
+};
+
+
 // --- WIDGET CHAT BOT ---
 const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi", onFormSubmit, onUnresolvedQuery }: ChatBotProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -147,25 +199,44 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi", onFormSubmit
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const processResponse = (text: string) => {
-    const inputLower = text.toLowerCase();
-    let type: Message['contentType'] = undefined;
-    let customBotText = "";
-    const esInformacion = ["informacion", "información", "opciones", "ayuda", "menu", "menú"].some(k => inputLower.includes(k));
-    if (esInformacion) { type = "menu_opciones"; customBotText = "¡Claro! Aquí tienes las opciones principales:"; } 
-    else if (inputLower.includes("vivo")) type = "reproductor_tv";
-    else if (inputLower.includes("entrevista")) type = "formulario_entrevista";
-    else if (inputLower.includes("denuncia") || inputLower.includes("noticia")) type = "formulario_noticia";
+  const inputLower = text.toLowerCase();
+  let type: Message['contentType'] = undefined;
+  let customBotText = "";
 
-    const match = intencionesData.find(intent => intent.active && intent.keywords.toLowerCase().split(',').some(k => inputLower.includes(k.trim())));
+  // 1. Definimos los disparadores
+  const esInformacion = ["informacion", "información", "opciones", "ayuda", "menu", "menú"].some(k => inputLower.includes(k));
+  const esPromocion = ["promocionar", "mi stream", "publicidad"].some(k => inputLower.includes(k));
 
-    // LÓGICA DE REGISTRO SI NO HAY RESPUESTA
-    if (!match && !esInformacion) {
-      onUnresolvedQuery(text); 
-    }
+  // 2. Asignamos el tipo de contenido y el texto personalizado
+  if (esInformacion) { 
+    type = "menu_opciones"; 
+    customBotText = "¡Claro! Aquí tienes las opciones principales:"; 
+  } 
+  else if (esPromocion) {
+    type = "formulario_stream";
+    customBotText = "¡Nos encanta apoyar! 🚀 Llena estos datos para poder promocionar tu stream:"; 
+  }
+  else if (inputLower.includes("vivo")) type = "reproductor_tv";
+  else if (inputLower.includes("entrevista")) type = "formulario_entrevista";
+  else if (inputLower.includes("denuncia") || inputLower.includes("noticia")) type = "formulario_noticia";
 
-    const finalBotText = esInformacion ? customBotText : (match ? (match.response || "Cargando...") : "No entiendo tu consulta, pero intenta con 'información' o 'vivo'.");
-    setMessages(prev => [...prev, { id: Date.now() + 1, sender: "bot", text: finalBotText, contentType: type }]);
-  };
+  const match = intencionesData.find(intent => intent.active && intent.keywords.toLowerCase().split(',').some(k => inputLower.includes(k.trim())));
+
+  // LÓGICA DE REGISTRO SI NO HAY RESPUESTA (Ignoramos si es una acción conocida como promoción)
+  if (!match && !esInformacion && !esPromocion) {
+    onUnresolvedQuery(text); 
+  }
+
+  // 3. CORRECCIÓN DE LA RESPUESTA FINAL
+  // Priorizamos customBotText si es información o promoción, si no buscamos el match, y finalmente el error.
+  const finalBotText = (esInformacion || esPromocion) 
+    ? customBotText 
+    : (match ? (match.response || "Cargando...") : "No entiendo tu consulta, pero intenta con 'información' o 'vivo'.");
+
+  setMessages(prev => [...prev, { id: Date.now() + 1, sender: "bot", text: finalBotText, contentType: type }]);
+};
+
+  
 
   const handleSend = (textOverride?: string) => {
     const text = textOverride || inputValue.trim();
@@ -192,6 +263,8 @@ const ChatBot = ({ intencionesData, botName = "Chat bot TV Aneupi", onFormSubmit
                 {msg.contentType === "reproductor_tv" && <WidgetReproductorTV />}
                 {msg.contentType === "formulario_entrevista" && <WidgetFormularioEntrevista onFormSubmit={(formData) => { setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "✅ ¡Gracias! Nuestro personal lo revisará y te daremos una respuesta lo antes posible." }]); onFormSubmit({ ...formData, tipo: 'Entrevista' }); }} />}
                 {msg.contentType === "formulario_noticia" && <WidgetFormularioNoticia onFormSubmit={(success, data) => { setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: success }]); onFormSubmit({ tipo: 'Noticia', usuario: data.remitente, correo: data.correo, titulo: data.titulo, ubicacion: data.ubicacion, contenido: `[${data.titulo.toUpperCase()}] - DETALLE: ${data.descripcion}` }); }} />}
+                {msg.contentType === "formulario_stream" && (<WidgetFormularioStream onFormSubmit={(formData) => { setMessages(prev => [...prev, { id: Date.now(), sender: "bot", text: "✅ ¡Gracias! Nuestro personal lo revisará y te daremos una respuesta lo antes posible." }]);onFormSubmit(formData);}} />)}
+
               </div>
             ))}
             <div ref={messagesEndRef} />

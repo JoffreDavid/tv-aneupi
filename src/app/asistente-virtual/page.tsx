@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, Plus, Bot, FileText, MessageSquare } from 'lucide-react';
+import { ShieldCheck, Plus, Bot, FileText, MessageSquare, Play } from 'lucide-react';
 
 // Importación de componentes modulares
 import IntentsModal from './intetsmodal';
@@ -9,13 +9,17 @@ import UnresolvedTab from './unresolvedTab';
 import IntentsTab from './intentsTab';
 import UnresolvedForm from './unresolvedForm'; 
 import ChatBot from './chatBot';
+import FormularioStream from './formularioStream';
 
 export default function AsistenteVirtualAdmin() {
-  const [activeTab, setActiveTab] = useState<'intents' | 'unresolved' | 'forms'>('intents');
+  const [activeTab, setActiveTab] = useState<'intents' | 'unresolved' | 'forms'| 'streams'>('intents');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedData, setSelectedData] = useState<any>(null);
   const [unresolvedLogs, setUnresolvedLogs] = useState<any[]>([]);
+  
+  // ESTADO PARA LAS SOLICITUDES DE STREAM (Ahora definido correctamente)
+  const [solicitudesStream, setSolicitudesStream] = useState<any[]>([]);
 
   // NUEVO: Estado para rastrear qué consultas ya fueron convertidas en intenciones
   const [resolvedQueryIds, setResolvedQueryIds] = useState<string[]>([]);
@@ -49,36 +53,40 @@ export default function AsistenteVirtualAdmin() {
     setUnresolvedLogs(prev => [newLog, ...prev]);
   };
 
-  const handleFormReceived = (datos: any) => {
-    const nuevoFormulario = { ...datos, id: Date.now(), fecha: new Date().toLocaleDateString('es-ES'), hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), estado: 'Pendiente' };
-    setFormulariosRecibidos(prev => [nuevoFormulario, ...prev]);
-    setToastMessage(`Nuevo formulario de ${datos.tipo} recibido.`);
-    triggerToast();
-  };
-
+  
   const handleOpenModal = (mode: 'create' | 'edit', data: any = null) => {
     setModalMode(mode);
     setSelectedData(data);
     setIsModalOpen(true);
   };
 
+  // ACTUALIZACIÓN: Lógica para enviar a la pestaña correcta
+  const handleFormReceived = (datos: any) => {
+    const nuevoRegistro = { 
+      ...datos, 
+      id: Date.now(), 
+      fecha: new Date().toLocaleDateString('es-ES'), 
+      hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), 
+      estado: 'Pendiente' 
+    };
+
+    if (datos.tipo === 'Promocion Stream') {
+      setSolicitudesStream(prev => [nuevoRegistro, ...prev]); // Llena la nueva tabla
+      setToastMessage("Nueva solicitud de stream recibida.");
+    } else {
+      setFormulariosRecibidos(prev => [nuevoRegistro, ...prev]);
+      setToastMessage(`Nuevo formulario de ${datos.tipo} recibido.`);
+    }
+    triggerToast();
+  };
+
   const handleSave = (newData: any) => {
     if (modalMode === 'edit') {
       setIntenciones(prev => prev.map(item => item.id === newData.id ? newData : item));
-      setToastMessage('Intención actualizada correctamente.');
     } else {
       const nuevoId = intenciones.length > 0 ? Math.max(...intenciones.map(i => i.id)) + 1 : 1;
-      
-      // Creamos la nueva intención y la ponemos al FINAL de la lista
-      const nuevaIntencion = { ...newData, id: nuevoId, responses: newData.response ? 1 : 0, active: true };
-      setIntenciones(prev => [...prev, nuevaIntencion]);
-
-      // Si la intención se creó desde un log de "No resueltas", marcamos ese ID como resuelto
-      if (selectedData?.logId) {
-        setResolvedQueryIds(prev => [...prev, selectedData.logId]);
-      }
-
-      setToastMessage('Nueva intención creada con éxito.');
+      setIntenciones(prev => [...prev, { ...newData, id: nuevoId, responses: 1, active: true }]);
+      if (selectedData?.logId) setResolvedQueryIds(prev => [...prev, selectedData.logId]);
     }
     setIsModalOpen(false);
     triggerToast();
@@ -122,11 +130,13 @@ export default function AsistenteVirtualAdmin() {
               <button onClick={() => setActiveTab('intents')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'intents' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Bot size={16} /> Intenciones</button>
               <button onClick={() => setActiveTab('forms')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'forms' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><FileText size={16} /> Formularios Recibidos</button>
               <button onClick={() => setActiveTab('unresolved')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'unresolved' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><MessageSquare size={16} /> No resueltas</button>
+              <button onClick={() => setActiveTab('streams')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'streams' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Play size={16} /> Streams Solicitados</button>
             </div>
-
+//RENDERIZADO DE PESTANIAS
             <div className="min-h-[400px]">
               {activeTab === 'intents' && <IntentsTab data={intenciones} onEdit={(item) => handleOpenModal('edit', item)} onToggleStatus={handleToggleStatus} />}
               {activeTab === 'forms' && <UnresolvedForm data={formulariosRecibidos} onMarkAsRead={handleMarkFormAsRead} />}
+              {activeTab === 'streams' && (<FormularioStream data={solicitudesStream} onMarkAsRead={(id) => setSolicitudesStream(prev => prev.map(s => s.id === id ? {...s, estado: 'Aceptado'} : s))} />)}
               {activeTab === 'unresolved' && (
                 <UnresolvedTab 
                   // Pasamos los IDs resueltos al componente
