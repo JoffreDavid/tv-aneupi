@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink, Search, ChevronLeft, ChevronRight, Pin, Send } from 'lucide-react';
+import { Play, Square, Trash2, Edit, Radio, Users, MessageSquareX, Plus, ExternalLink, Search, ChevronLeft, ChevronRight, Pin, Send, MonitorPlay, Ban } from 'lucide-react';
 
 // --- INTERFACES PARA TYPESCRIPT ---
 interface Comment {
@@ -24,19 +24,10 @@ interface Channel {
 
 export default function TvVivoAdminPage() {
   // --- ESTADOS SIMULADOS ---
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
+  const [searchTerm, setSearchTerm] = useState('');
   const [isStreaming, setIsStreaming] = useState(true);
 
-  // Estados para el Chat
-  const [comments, setComments] = useState<Comment[]>([
-    { id: 1, user: 'ANEUPI Noticias', text: 'Última hora: Nuevas medidas implementadas.', time: 'Hace 2 min', isModerator: true },
-    { id: 2, user: 'Maria López', text: 'Excelente cobertura de las noticias', time: 'Hace 8 min' },
-    { id: 3, user: 'Carlos Pérez', text: 'Muy informativo el segmento.', time: 'Hace 10 min' },
-    { id: 4, user: 'Usuario Troll', text: 'Este canal es una pérdida de tiempo xd', time: 'Hace 11 min' },
-  ]);
-  const [newComment, setNewComment] = useState('');
-  const [pinnedCommentId, setPinnedCommentId] = useState<number | null>(1); // El id 1 fijado por defecto para la demostración
-
+  // Estados de Canales
   const [channels, setChannels] = useState<Channel[]>([
     { id: 1, title: 'ANEUPI Noticias 24/7', category: 'Noticias', viewers: 2500, isLive: true, image: 'bg-blue-900', url: 'https://youtube.com' },
     { id: 2, title: 'Deportes en Vivo', category: 'Deportes', viewers: 1800, isLive: true, image: 'bg-green-900', url: '' },
@@ -44,15 +35,31 @@ export default function TvVivoAdminPage() {
     { id: 4, title: 'Cine Independiente', category: 'Entretenimiento', viewers: 420, isLive: true, image: 'bg-indigo-900', url: '' },
   ]);
 
+  // Canal Activo en la Transmisión Principal
+  const [activeChannelId, setActiveChannelId] = useState<number | null>(1); 
+
+  // Estados para el Chat
+  // [Backend - Websockets] El estado inicial debería cargarse desde la BD y luego escuchar eventos de un WebSocket
+  const [comments, setComments] = useState<Comment[]>([
+    { id: 1, user: 'ANEUPI Noticias', text: 'Última hora: Nuevas medidas implementadas.', time: 'Hace 2 min', isModerator: true },
+    { id: 2, user: 'Maria López', text: 'Excelente cobertura de las noticias', time: 'Hace 8 min' },
+    { id: 3, user: 'Carlos Pérez', text: 'Muy informativo el segmento.', time: 'Hace 10 min' },
+    { id: 4, user: 'Usuario Troll', text: 'Este canal es una pérdida de tiempo xd', time: 'Hace 11 min' },
+  ]);
+  const [newComment, setNewComment] = useState('');
+  const [pinnedCommentId, setPinnedCommentId] = useState<number | null>(1);
+
   // --- ESTADOS DEL MODAL ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-  // --- LÓGICA DE BÚSQUEDA ---
+  // --- LÓGICA DE BÚSQUEDA Y CANAL ACTIVO ---
   const filteredChannels = channels.filter(channel => 
     channel.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     channel.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const activeChannel = channels.find(c => c.id === activeChannelId);
 
   // --- FUNCIONES DE ACCIÓN (SALA DE CONTROL Y CHAT) ---
   const toggleStream = () => setIsStreaming(!isStreaming);
@@ -60,13 +67,31 @@ export default function TvVivoAdminPage() {
   const deleteComment = (id: number) => {
     if (confirm('¿Eliminar este comentario del chat público?')) {
       setComments(comments.filter(c => c.id !== id));
-      if (pinnedCommentId === id) setPinnedCommentId(null); // Quitar el fijado si se elimina
+      if (pinnedCommentId === id) setPinnedCommentId(null);
+
+      // [Backend - Emitir Borrado]
+      // socket.emit('admin_delete_message', { messageId: id });
+    }
+  };
+
+  const banUser = (username: string) => {
+    if (confirm(`¿Estás seguro de BLOQUEAR a ${username}? Se eliminarán todos sus mensajes y no podrá volver a escribir.`)) {
+      // 1. Eliminar visualmente todos los comentarios de ese usuario
+      setComments(prevComments => prevComments.filter(c => c.user !== username));
+      
+      // 2. [Backend - Banear y Emitir]
+      // Enviar petición al backend (ej: Node.js) para registrar el ban en BD.
+      // fetch('/api/admin/chat/ban', { method: 'POST', body: JSON.stringify({ username }) })
+      // Y emitir por socket: socket.emit('admin_ban_user', { username });
+      
+      alert(`El usuario ${username} ha sido bloqueado.`);
     }
   };
 
   const togglePinComment = (id: number) => {
-    // Si ya está fijado, lo desfija. Si no, lo fija.
     setPinnedCommentId(prevId => prevId === id ? null : id);
+    // [Backend - Emitir Fijado]
+    // socket.emit('admin_pin_message', { messageId: pinnedCommentId === id ? null : id });
   };
 
   const handleSendComment = (e: React.FormEvent) => {
@@ -75,20 +100,28 @@ export default function TvVivoAdminPage() {
 
     const commentToAdd: Comment = {
       id: Date.now(),
-      user: 'Admin ANEUPI', // Usuario por defecto del admin
+      user: 'Admin ANEUPI',
       text: newComment,
       time: 'Justo ahora',
       isModerator: true
     };
 
-    setComments([commentToAdd, ...comments]); // Agrega el mensaje al principio de la lista
+    setComments([commentToAdd, ...comments]);
     setNewComment('');
+
+    // [Backend - Enviar Mensaje Oficial]
+    // socket.emit('send_message', commentToAdd);
   };
 
   // --- FUNCIONES DE GESTIÓN DE CANALES ---
   const deleteChannel = (id: number) => {
     if (confirm('¿Estás seguro de eliminar este canal permanentemente?')) {
-      setChannels(channels.filter(c => c.id !== id));
+      const remainingChannels = channels.filter(c => c.id !== id);
+      setChannels(remainingChannels);
+      
+      if (activeChannelId === id) {
+        setActiveChannelId(remainingChannels.length > 0 ? remainingChannels[0].id : null);
+      }
     }
   };
 
@@ -128,7 +161,6 @@ export default function TvVivoAdminPage() {
     setIsModalOpen(false);
   };
 
-  // --- FUNCIÓN PARA DESPLAZAMIENTO (SCROLL) ---
   const scrollContainer = (id: string, direction: 'left' | 'right') => {
     const container = document.getElementById(id);
     if (container) {
@@ -161,7 +193,6 @@ export default function TvVivoAdminPage() {
           </p>
         </div>
         
-        {/* BUSCADOR Y BOTÓN AGREGAR */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -186,25 +217,32 @@ export default function TvVivoAdminPage() {
       {/* BLOQUE 1: SALA DE CONTROL Y MODERACIÓN */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Transmisión Principal */}
+        {/* Transmisión Principal Dinámica */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
           <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h2 className="!text-[18px] font-bold text-[#003952]">Transmisión Principal</h2>
-            <div className="flex items-center gap-2 text-[12px] font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
-              <Users size={14} /> 2,500 Espectadores
+            <div>
+               <h2 className="!text-[18px] font-bold text-[#003952]">Transmisión Principal</h2>
+               <p className="text-[13px] text-gray-500 font-medium mt-0.5">
+                 {activeChannel ? `Emite: ${activeChannel.title}` : 'Sin canal seleccionado'}
+               </p>
+            </div>
+            
+            <div className="flex items-center gap-2 text-[12px] font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full border border-red-100">
+              <Users size={14} /> {activeChannel ? activeChannel.viewers : 0} Espectadores
             </div>
           </div>
 
-          <div className={`flex-1 flex flex-col items-center justify-center transition-colors min-h-[300px] ${isStreaming ? 'bg-slate-800' : 'bg-black'}`}>
-            {isStreaming ? (
-              <div className="text-center text-white">
+          <div className={`flex-1 flex flex-col items-center justify-center transition-colors min-h-[300px] ${isStreaming && activeChannel ? activeChannel.image : 'bg-black'}`}>
+            {isStreaming && activeChannel ? (
+              <div className="text-center text-white bg-black/40 p-6 rounded-2xl backdrop-blur-sm">
                 <Radio size={48} className="mx-auto mb-4 animate-pulse text-red-500" />
-                <p className="text-xl text-white font-bold">SEÑAL EN VIVO ACTIVA</p>
+                <p className="text-2xl text-white font-bold mb-1">SEÑAL EN VIVO ACTIVA</p>
+                <p className="text-sm text-gray-300 uppercase tracking-widest">{activeChannel.category}</p>
               </div>
             ) : (
               <div className="text-center text-gray-500">
                 <Square size={48} className="mx-auto mb-4" />
-                <p className="text-xl font-bold">TRANSMISIÓN PAUSADA</p>
+                <p className="text-xl font-bold">{!activeChannel ? 'SELECCIONA UN CANAL' : 'TRANSMISIÓN PAUSADA'}</p>
               </div>
             )}
           </div>
@@ -212,7 +250,8 @@ export default function TvVivoAdminPage() {
           <div className="p-4 bg-white flex gap-4">
             <button
               onClick={toggleStream}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors text-[14px] shadow-sm ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+              disabled={!activeChannel}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-colors text-[14px] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isStreaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
             >
               {isStreaming ? <><Square size={18} /> DETENER STREAM</> : <><Play size={18} /> INICIAR STREAM</>}
             </button>
@@ -223,11 +262,11 @@ export default function TvVivoAdminPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
           <div className="p-4 border-b border-gray-100 bg-[#003952] text-white rounded-t-xl">
             <h2 className="!text-[16px] font-bold !text-white flex items-center gap-2">
-              <MessageSquareX size={18} /> Comentarios
+              <MessageSquareX size={18} /> Comentarios en Vivo
             </h2>
           </div>
 
-          {/* SECCIÓN DEL COMENTARIO FIJADO */}
+          {/* Comentario Fijado */}
           {pinnedCommentId && comments.find(c => c.id === pinnedCommentId) && (
             <div className="p-3 bg-blue-50 border-b border-blue-100 relative">
               <div className="flex items-center gap-1 text-[#003952] text-[11px] font-bold mb-1 uppercase tracking-wider">
@@ -247,7 +286,7 @@ export default function TvVivoAdminPage() {
             </div>
           )}
 
-          {/* LISTA DE COMENTARIOS */}
+          {/* Lista de Comentarios */}
           <div className="p-4 flex-1 overflow-y-auto space-y-3">
             {comments.map(comment => (
               <div key={comment.id} className={`group relative p-3 rounded-lg border transition-colors ${comment.isModerator ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50 border-gray-100 hover:border-gray-200'}`}>
@@ -257,17 +296,30 @@ export default function TvVivoAdminPage() {
                   </span>
                   <span className="text-[10px] text-gray-400">{comment.time}</span>
                 </div>
-                <p className="text-[13px] text-gray-600 pr-10">{comment.text}</p>
+                <p className="text-[13px] text-gray-600 pr-16">{comment.text}</p> {/* Añadido pr-16 para que el texto no se monte sobre los 3 iconos */}
 
                 {/* BOTONES DE ACCIÓN FLOTANTES */}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm p-1 rounded-lg">
+                  
+                  {/* BOTÓN BLOQUEAR USUARIO */}
+                  {!comment.isModerator && (
+                    <button
+                      onClick={() => banUser(comment.user)}
+                      className="p-1.5 bg-white text-orange-500 rounded hover:text-white hover:bg-orange-500 transition-colors shadow-sm border border-transparent hover:border-orange-600"
+                      title={`Bloquear a ${comment.user}`}
+                    >
+                      <Ban size={14} />
+                    </button>
+                  )}
+
                   <button
                     onClick={() => togglePinComment(comment.id)}
-                    className={`p-1.5 rounded transition-colors ${pinnedCommentId === comment.id ? 'bg-[#003952] text-white' : 'bg-white text-gray-400 hover:text-[#003952] shadow-sm'}`}
+                    className={`p-1.5 rounded transition-colors shadow-sm ${pinnedCommentId === comment.id ? 'bg-[#003952] text-white' : 'bg-white text-gray-400 hover:text-[#003952]'}`}
                     title={pinnedCommentId === comment.id ? "Desfijar" : "Fijar mensaje"}
                   >
                     <Pin size={14} />
                   </button>
+
                   <button
                     onClick={() => deleteComment(comment.id)}
                     className="p-1.5 bg-white text-red-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
@@ -281,7 +333,6 @@ export default function TvVivoAdminPage() {
             {comments.length === 0 && <p className="text-center text-gray-400 mt-10 text-[14px]">Chat vacío</p>}
           </div>
 
-          {/* CAJA PARA ESCRIBIR MENSAJE COMO ADMIN */}
           <div className="p-3 border-t border-gray-100 bg-white rounded-b-xl">
             <form onSubmit={handleSendComment} className="flex gap-2">
               <input
@@ -300,7 +351,6 @@ export default function TvVivoAdminPage() {
               </button>
             </form>
           </div>
-
         </div>
       </div>
 
@@ -312,7 +362,6 @@ export default function TvVivoAdminPage() {
 
         {filteredChannels.length > 0 ? (
           <div className="relative group">
-            {/* FLECHAS DE NAVEGACIÓN */}
             <button onClick={() => scrollContainer('scroll-canales', 'left')} className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 p-3 bg-white border border-gray-200 rounded-full text-[#003952] shadow-lg hover:bg-gray-50 transition-all opacity-0 group-hover:opacity-100 hidden md:block">
               <ChevronLeft size={24} />
             </button>
@@ -320,12 +369,10 @@ export default function TvVivoAdminPage() {
               <ChevronRight size={24} />
             </button>
 
-            {/* CONTENEDOR CON SCROLL */}
             <div id="scroll-canales" className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide pt-2 px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {filteredChannels.map(channel => (
-                <div key={channel.id} className="w-80 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group hover:shadow-md hover:-translate-y-1 transition-all">
+                <div key={channel.id} className={`w-80 shrink-0 snap-start bg-white border rounded-xl overflow-hidden shadow-sm flex flex-col group transition-all duration-300 hover:shadow-md ${activeChannelId === channel.id ? 'border-[#003952] ring-2 ring-[#003952]/20' : 'border-gray-200 hover:-translate-y-1'}`}>
 
-                  {/* MINIATURA CON ENLACE CLICKEABLE */}
                   <a
                     href={channel.url || '#'}
                     target={channel.url ? "_blank" : "_self"}
@@ -351,12 +398,20 @@ export default function TvVivoAdminPage() {
                       )}
                     </div>
                     
-                    <div className="flex justify-between items-center mb-5 mt-1">
+                    <div className="flex justify-between items-center mb-4 mt-1">
                       <span className="inline-block bg-gray-100 text-gray-600 text-[11px] font-medium px-2 py-1 rounded">
                         {channel.category}
                       </span>
                       <span className="text-[12px] text-gray-400 flex items-center gap-1"><Users size={12}/> {channel.viewers}</span>
                     </div>
+
+                    <button
+                      onClick={() => setActiveChannelId(channel.id)}
+                      className={`w-full py-2 flex items-center justify-center gap-2 rounded text-[13px] font-bold mb-3 transition-colors ${activeChannelId === channel.id ? 'bg-[#003952] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                    >
+                      <MonitorPlay size={16} />
+                      {activeChannelId === channel.id ? 'En Emisión Principal' : 'Emitir en Principal'}
+                    </button>
 
                     <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
                       <button
