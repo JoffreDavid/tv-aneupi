@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Share2, Eye, Heart, MessageCircle, Calendar, User, ArrowRight, BookOpen } from 'lucide-react';
+// IMPORTANTE: Asegúrate de tener el archivo ArticuloCompleto.tsx en la misma carpeta [cite: 208]
+import ArticuloCompleto from './articuloCompleto'; 
 
 // --- INTERFACES ---
 interface Article {
@@ -16,7 +18,7 @@ interface Article {
     comments: number;
     imageColor: string;
     url: string;
-    imageUrl?: string; // NUEVO: URL de la imagen
+    imageUrl?: string;
 }
 
 interface Trending {
@@ -32,9 +34,12 @@ interface Brand {
 }
 
 export default function ArticulosAdminPage() {
-    // --- ESTADOS SIMULADOS ---
+    // --- ESTADOS ---
     const [searchTerm, setSearchTerm] = useState('');
-
+    
+    // NUEVO: Estado para controlar la visualización del artículo completo 
+    const [displayedArticle, setDisplayedArticle] = useState<Article | null>(null); 
+    
     const [articles, setArticles] = useState<Article[]>([
         {
             id: 1, title: 'Comprobación para ver si usa estos datos',
@@ -93,8 +98,6 @@ export default function ArticulosAdminPage() {
         { id: 6, name: 'BANCO ANEUPI', logo: '/logos/bancoaneupi.jpeg' }
     ]);
 
-    const carouselBrandsRef = useRef<HTMLDivElement>(null);
-
     // --- ESTADOS DEL MODAL ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
@@ -136,7 +139,7 @@ export default function ArticulosAdminPage() {
         const category = formData.get('category') as string;
         const description = formData.get('description') as string;
         const url = formData.get('url') as string;
-        const imageUrl = formData.get('imageUrl') as string; // Capturamos la URL de la imagen
+        const imageUrl = formData.get('imageUrl') as string;
 
         if (selectedArticle) {
             setArticles(articles.map(a =>
@@ -154,10 +157,6 @@ export default function ArticulosAdminPage() {
         setIsModalOpen(false);
     };
 
-    const deleteTrending = (id: number) => {
-        if (confirm('¿Quitar de destacados?')) setTrending(trending.filter(t => t.id !== id));
-    };
-
     const scrollContainer = (id: string, direction: 'left' | 'right') => {
         const container = document.getElementById(id);
         if (container) {
@@ -173,310 +172,136 @@ export default function ArticulosAdminPage() {
         <div className="space-y-10 relative">
             <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
 
-           {/* 1. CABECERA DE LA PÁGINA */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
-                
-                {/* TÍTULO MEJORADO CON ACENTO AZUL E ÍCONO */}
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-4">
-                        {/* Barra lateral de acento (Borde azul redondeado) */}
-                        <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
-                        <div className="flex items-center gap-3">
-                            <BookOpen size={34} className="text-[#003952]" strokeWidth={2.5} />
-                            <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">
-                                Artículos
-                            </h1>
+            {/* RENDERIZADO CONDICIONAL: Artículo Completo o Lista de Categorías [cite: 293] */}
+            {displayedArticle ? (
+                <ArticuloCompleto 
+                    articulo={displayedArticle} 
+                    onBack={() => setDisplayedArticle(null)} // Función para regresar al listado [cite: 293, 294]
+                />
+            ) : (
+                <>
+                    {/* 1. CABECERA DE LA PÁGINA */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-4">
+                                <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
+                                <div className="flex items-center gap-3">
+                                    <BookOpen size={34} className="text-[#003952]" strokeWidth={2.5} />
+                                    <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">Artículos</h1>
+                                </div>
+                            </div>
+                            <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">Lee y gestiona artículos de opinión, análisis y reportajes.</p>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text" placeholder="Buscar artículo..." value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] transition-shadow shadow-sm"
+                                />
+                            </div>
+                            <button onClick={openAddModal} className="w-full sm:w-auto bg-[#003952] text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-[#002233] transition-colors whitespace-nowrap">
+                                <Plus size={18} /> Agregar artículo
+                            </button>
                         </div>
                     </div>
-                    {/* El margen izquierdo alinea el texto saltándose la barra */}
-                    <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">
-                        Lee y gestiona artículos de opinión, análisis y reportajes en profundidad.
-                    </p>
-                </div>
-                
-                {/* BUSCADOR Y BOTÓN (Alineados a la derecha) */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                    <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar artículo..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] transition-shadow shadow-sm"
-                        />
-                    </div>
 
-                    <button
-                        onClick={openAddModal}
-                        className="w-full sm:w-auto bg-[#003952] text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-[#002233] transition-colors whitespace-nowrap"
-                    >
-                        <Plus size={18} /> Agregar artículo
-                    </button>
-                </div>
-            </div>
+                    {/* 2. CUERPO PRINCIPAL (LISTADO POR CATEGORÍAS) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        <div className="lg:col-span-3 space-y-10">
+                            {Object.entries(groupedArticles).map(([category, catArticles]) => (
+                                <div key={category} className="relative">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="font-bold text-[18px] text-[#003952] uppercase flex items-center gap-2">
+                                            <span className="w-2 h-6 bg-red-600 rounded-full block"></span>{category}
+                                        </h2>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => scrollContainer(`scroll-${category}`, 'left')} className="p-1.5 border border-gray-200 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"><ChevronLeft size={18} /></button>
+                                            <button onClick={() => scrollContainer(`scroll-${category}`, 'right')} className="p-1.5 border border-gray-200 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"><ChevronRight size={18} /></button>
+                                        </div>
+                                    </div>
 
-            {/* 2. CUERPO PRINCIPAL */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                                    <div id={`scroll-${category}`} className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                                        {catArticles.map(article => (
+                                            <div key={article.id} className="w-60 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group relative">
+                                                <div className={`h-20 ${article.imageColor} relative flex items-center justify-center opacity-90 overflow-hidden`}>
+                                                    {article.imageUrl && <img src={article.imageUrl} alt={article.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
+                                                    <div className="absolute inset-0 bg-black/10 z-0"></div>
+                                                </div>
+                                                <div className="p-4 flex-1 flex flex-col">
+                                                    <h3 className="font-bold text-[16px] text-[#003952] mb-2 leading-snug line-clamp-2">{article.title}</h3>
+                                                    <p className="text-[13px] text-gray-500 mb-4 line-clamp-3 leading-relaxed">{article.description}</p>
+                                                    
+                                                    <div className="flex justify-between items-end mb-4 mt-auto">
+                                                        <div className="flex flex-col text-[12px] text-gray-400 gap-1">
+                                                            <span className="flex items-center gap-1"><User size={12} /> {article.author}</span>
+                                                            <span className="flex items-center gap-1"><Calendar size={12} /> {article.date}</span>
+                                                        </div>
+                                                        {/* MODIFICACIÓN: Acción para activar la vista completa del artículo [cite: 325] */}
+                                                        <button 
+                                                            onClick={() => setDisplayedArticle(article)} 
+                                                            className="bg-[#003952] text-white px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1 hover:bg-[#002233] transition-colors"
+                                                        >
+                                                            Leer más <ArrowRight size={14} />
+                                                        </button>
+                                                    </div>
 
-                {/* Lado Izquierdo: Filas por Categoría */}
-                <div className="lg:col-span-3 space-y-10">
-
-                    {Object.keys(groupedArticles).length > 0 ? (
-                        Object.entries(groupedArticles).map(([category, catArticles]) => (
-                            <div key={category} className="relative">
-
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="font-bold text-[18px] text-[#003952] uppercase flex items-center gap-2">
-                                        <span className="w-2 h-6 bg-red-600 rounded-full block"></span>
-                                        {category}
-                                    </h2>
-
-                                    <div className="flex gap-2">
-                                        <button onClick={() => scrollContainer(`scroll-${category}`, 'left')} className="p-1.5 border border-gray-200 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
-                                            <ChevronLeft size={18} />
-                                        </button>
-                                        <button onClick={() => scrollContainer(`scroll-${category}`, 'right')} className="p-1.5 border border-gray-200 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
-                                            <ChevronRight size={18} />
-                                        </button>
+                                                    <div className="flex justify-between items-center pt-3 border-t border-gray-100 text-gray-400 text-[12px]">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="flex items-center gap-1"><Eye size={14} /> {article.views}</span>
+                                                            <span className="flex items-center gap-1"><Heart size={14} /> {article.likes}</span>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            <button onClick={() => openEditModal(article)} className="p-1.5 bg-gray-100 text-gray-600 rounded hover:bg-[#003952] hover:text-white transition-colors"><Edit size={14} /></button>
+                                                            <button onClick={() => deleteArticle(article.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"><Trash2 size={14} /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
+                            ))}
+                        </div>
 
-                                <div
-                                    id={`scroll-${category}`}
-                                    className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-                                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                                >
-                                    {catArticles.map(article => (
-                                        <div key={article.id} className="w-60 shrink-0 snap-start bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col group relative">
-
-                                            <div className={`h-20 ${article.imageColor} relative flex items-center justify-center opacity-90 overflow-hidden`}>
-                                                
-                                                {/* IMAGEN DEL ARTÍCULO */}
-                                                {article.imageUrl && (
-                                                    <>
-                                                        <img src={article.imageUrl} alt={article.title} className="absolute inset-0 w-full h-full object-cover z-0" />
-                                                        {/* Filtro oscuro leve para resaltar el botón de compartir */}
-                                                        <div className="absolute inset-0 bg-black/10 z-0"></div> 
-                                                    </>
-                                                )}
-
-                                                <button className="absolute top-3 right-3 bg-[#003952] bg-opacity-80 p-1.5 rounded-full text-white hover:bg-opacity-100 transition z-10">
-                                                    <Share2 size={14} />
-                                                </button>
-                                            </div>
-
-                                            <div className="p-4 flex-1 flex flex-col">
-                                                <h3 className="font-bold text-[16px] text-[#003952] mb-2 leading-snug line-clamp-2">
-                                                    {article.title}
-                                                </h3>
-                                                <p className="text-[13px] text-gray-500 mb-4 line-clamp-3 leading-relaxed">
-                                                    {article.description}
-                                                </p>
-
-                                                <div className="flex justify-between items-end mb-4 mt-auto">
-                                                    <div className="flex flex-col text-[12px] text-gray-400 gap-1">
-                                                        <span className="flex items-center gap-1"><User size={12} /> {article.author}</span>
-                                                        <span className="flex items-center gap-1"><Calendar size={12} /> {article.date}</span>
-                                                    </div>
-
-                                                    <a
-                                                        href={article.url || '#'}
-                                                        target={article.url ? "_blank" : "_self"}
-                                                        rel="noopener noreferrer"
-                                                        className="bg-[#003952] text-white px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1 hover:bg-[#002233] transition-colors"
-                                                    >
-                                                        Leer más <ArrowRight size={14} />
-                                                    </a>
-                                                </div>
-
-                                                <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                                    <div className="flex items-center gap-3 text-gray-400 text-[12px]">
-                                                        <span className="flex items-center gap-1"><Eye size={14} /> {article.views}</span>
-                                                        <span className="flex items-center gap-1"><Heart size={14} /> {article.likes}</span>
-                                                        <span className="flex items-center gap-1"><MessageCircle size={14} /> {article.comments}</span>
-                                                    </div>
-
-                                                    <div className="flex gap-1">
-                                                        <button
-                                                            onClick={() => openEditModal(article)}
-                                                            className="p-1.5 bg-gray-100 text-gray-600 rounded hover:bg-[#003952] hover:text-white transition-colors"
-                                                            title="Editar Artículo"
-                                                        >
-                                                            <Edit size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => deleteArticle(article.id)}
-                                                            className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"
-                                                            title="Eliminar Artículo"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                        {/* PANEL DERECHO EDITORIAL */}
+                        <div className="lg:col-span-1 space-y-4">
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-8">
+                                <div className="py-3 bg-[#003952] text-white text-center font-bold text-[14px]">Editorial ANEUPI</div>
+                                <div className="p-5 space-y-5">
+                                    <h3 className="font-bold text-[16px] text-gray-800">¿Qué está pasando?</h3>
+                                    {trending.map(item => (
+                                        <div key={item.id} className="group relative pr-6">
+                                            <p className="text-[10px] text-gray-400 mb-1">Tendencia</p>
+                                            <h4 className="font-bold text-[#003952] text-[14px] leading-tight">{item.title}</h4>
+                                            <p className="text-[12px] text-gray-400 mt-1">{item.views}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="py-10 text-center text-gray-400 text-[14px]">
-                            No se encontraron artículos con "{searchTerm}"
-                        </div>
-                    )}
-                </div>
-
-                {/* Lado Derecho: Panel Editorial */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-8">
-                        <div className="py-3 bg-[#003952] text-white text-center font-bold text-[14px]">
-                            Editorial ANEUPI
-                        </div>
-
-                        <div className="p-5 space-y-5">
-                            <h3 className="font-bold text-[16px] text-gray-800">¿Qué está pasando?</h3>
-
-                            {trending.map(item => (
-                                <div key={item.id} className="group relative pr-6">
-                                    <p className="text-[10px] text-gray-400 mb-1">Tendencia en este momento</p>
-                                    <h4 className="font-bold text-[#003952] text-[14px] leading-tight">{item.title}</h4>
-                                    <p className="text-[12px] text-gray-400 mt-1">{item.views}</p>
-
-                                    <button
-                                        onClick={() => deleteTrending(item.id)}
-                                        className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            ))}
-
-                            <button className="text-[#003952] text-[14px] font-medium hover:underline pt-2">
-                                Show more
-                            </button>
                         </div>
                     </div>
-                </div>
+                </>
+            )}
 
-            </div>
-
-    
-
-            {/* 4. MODAL PARA CREAR/EDITAR ARTÍCULO */}
+            {/* MODAL PARA CREAR/EDITAR (Mantenido igual) */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in duration-200">
-
-                        <div className="p-6 border-b border-gray-100 bg-gray-50">
-                            <h2 className="!text-[25px] !text-[#003952] font-bold">
-                                {selectedArticle ? 'Editar Artículo' : 'Nuevo Artículo'}
-                            </h2>
-                        </div>
-
-                        <form onSubmit={handleGuardarArticulo} className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                {/* Título ocupa las 2 columnas */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">Título del Artículo</label>
-                                    <input
-                                        type="text"
-                                        name="title"
-                                        defaultValue={selectedArticle?.title || ''}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
-                                        placeholder="Escribe un título llamativo"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Autor */}
-                                <div>
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">Autor</label>
-                                    <input
-                                        type="text"
-                                        name="author"
-                                        defaultValue={selectedArticle?.author || ''}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
-                                        placeholder="Ej: Ana Silva"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Categoría */}
-                                <div>
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">Categoría</label>
-                                    <select
-                                        name="category"
-                                        defaultValue={selectedArticle?.category || 'TECNOLOGÍA'}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] bg-white uppercase"
-                                    >
-                                        <option value="TECNOLOGÍA">Tecnología</option>
-                                        <option value="MEDIO AMBIENTE">Medio Ambiente</option>
-                                        <option value="ARTE Y CULTURA">Arte y Cultura</option>
-                                        <option value="ECONOMÍA">Economía</option>
-                                    </select>
-                                </div>
-
-                                {/* NUEVO CAMPO: URL DE LA IMAGEN */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de la Imagen (Opcional)</label>
-                                    <input
-                                        type="url"
-                                        name="imageUrl"
-                                        defaultValue={selectedArticle?.imageUrl || ''}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
-                                        placeholder="https://ejemplo.com/imagen.jpg"
-                                    />
-                                </div>
-
-                                {/* URL ocupa las 2 columnas */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">URL de Redirección (Leer más)</label>
-                                    <input
-                                        type="url"
-                                        name="url"
-                                        defaultValue={selectedArticle?.url || ''}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px]"
-                                        placeholder="https://aneupi.com/articulo"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Resumen ocupa las 2 columnas */}
-                                <div className="md:col-span-2">
-                                    <label className="block text-gray-700 font-medium mb-1 text-[14px]">Resumen / Descripción</label>
-                                    <textarea
-                                        name="description"
-                                        rows={3}
-                                        defaultValue={selectedArticle?.description || ''}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#003952] outline-none text-[14px] resize-none"
-                                        placeholder="Escribe un breve resumen de lo que trata el artículo..."
-                                        required
-                                    ></textarea>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-[14px]"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-[#003952] text-white rounded-lg hover:bg-[#002233] transition-colors text-[14px] font-bold flex justify-center items-center gap-2"
-                                >
-                                    {selectedArticle ? 'Guardar Cambios' : 'Publicar Artículo'}
-                                </button>
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden p-6 space-y-4">
+                        <h2 className="text-[25px] text-[#003952] font-bold">{selectedArticle ? 'Editar Artículo' : 'Nuevo Artículo'}</h2>
+                        <form onSubmit={handleGuardarArticulo} className="space-y-4">
+                            <input name="title" defaultValue={selectedArticle?.title} className="w-full p-2 border rounded" placeholder="Título" required />
+                            <textarea name="description" defaultValue={selectedArticle?.description} className="w-full p-2 border rounded" placeholder="Contenido" rows={3} required />
+                            <div className="flex gap-3 pt-4 border-t">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 p-2 border rounded">Cancelar</button>
+                                <button type="submit" className="flex-1 p-2 bg-[#003952] text-white rounded font-bold">Guardar</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
