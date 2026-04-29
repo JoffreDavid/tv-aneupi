@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, User, Calendar, BookOpen, MessageCircle, 
-  Send, Trash2, Star, Pin, EyeOff, Eye, CheckCircle, Reply 
+  Send, Trash2, Star, Pin, EyeOff, Eye, CheckCircle, Reply,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface NoticiaCompletaProps {
@@ -32,8 +33,56 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
     const [replyTo, setReplyTo] = useState<number | null>(null);
     const [textoRespuesta, setTextoRespuesta] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showAllComments, setShowAllComent] = useState(false); // Estado para expansión[cite: 1]
 
-    // --- FUNCIONES ADMINISTRATIVAS ---
+    /* ==========================================================================
+       LÓGICA PARA EL EQUIPO DE BACKEND (DESCOMENTAR PARA INTEGRAR)
+       ==========================================================================
+    
+    // 1. CARGA DE COMENTARIOS: GET /api/noticias/{id}/comments
+    useEffect(() => {
+        const fetchComments = async () => {
+            try {
+                setIsLoading(true);
+                const res = await fetch(`/api/noticias/${noticia.id}/comentarios`);
+                const data = await res.json();
+                setComentarios(data);
+            } catch (error) { console.error(error); } 
+            finally { setIsLoading(false); }
+        };
+        if (noticia?.id) fetchComments();
+    }, [noticia?.id]);
+
+    // 2. CREAR RESPUESTA ADMIN: POST /api/comments/{parentId}/replies
+    const enviarRespuestaAPI = async (parentId: number) => {
+        if (!textoRespuesta.trim()) return;
+        try {
+            const res = await fetch(`/api/comentarios/${parentId}/respuestas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ texto: textoRespuesta, isAdmin: true })
+            });
+            const newReply = await res.json();
+            setComentarios(comentarios.map(c => 
+                c.id === parentId ? { ...c, respuestas: [...c.respuestas, newReply] } : c
+            ));
+            setTextoRespuesta("");
+            setReplyTo(null);
+        } catch (error) { console.error(error); }
+    };
+
+    // 3. MODERACIÓN (ELIMINAR/ESTADOS): DELETE o PATCH /api/comments/{id}
+    const updateStatusAPI = async (id: number, status: object) => {
+        try {
+            await fetch(`/api/comentarios/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify(status)
+            });
+        } catch (error) { console.error(error); }
+    };
+    ========================================================================== */
+
+    // --- FUNCIONES ADMINISTRATIVAS TEMPORALES ---
     const eliminarComentario = (id: number) => {
         if (confirm("¿Seguro que deseas eliminar este comentario?")) {
             setComentarios(comentarios.filter(c => c.id !== id));
@@ -70,7 +119,6 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
 
     const enviarRespuesta = (parentId: number) => {
         if (!textoRespuesta.trim()) return;
-        
         setComentarios(comentarios.map(c => {
             if (c.id === parentId) {
                 return {
@@ -90,37 +138,17 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
         setReplyTo(null);
     };
 
-    /* ==========================================================================
-       LÓGICA PARA EL EQUIPO DE BACKEND (COMENTADA PARA FUTURA INTEGRACIÓN)
-       ========================================================================== */
-    /*
-    useEffect(() => {
-        const fetchComentarios = async () => {
-            try {
-                setIsLoading(true);
-                const response = await fetch(`/api/noticias/${noticia.id}/comentarios`);
-                const data = await response.json();
-                setComentarios(data);
-            } catch (error) {
-                console.error("Error al cargar comentarios:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        if (noticia?.id) fetchComentarios();
-    }, [noticia?.id]);
-    */
-
-    const comentariosOrdenados = [...comentarios].sort((a, b) => (a.fijado === b.fijado ? 0 : a.fijado ? -1 : 1));
+    // --- LÓGICA DE ORDENAMIENTO Y VISIBILIDAD ---
+    const comentariosOrdenados = [...comentarios].sort((a: any, b: any) => (a.fijado === b.fijado ? 0 : a.fijado ? -1 : 1));
+    
+    // Muestra solo 2 inicialmente si no se ha expandido[cite: 1]
+    const comentariosVisibles = showAllComments ? comentariosOrdenados : comentariosOrdenados.slice(0, 2);
 
     return (
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden animate-in fade-in duration-500 pb-20">
             {/* 1. CABECERA SUPERIOR */}
             <div className="p-6 flex justify-between items-center border-b border-gray-50 bg-white">
-                <button 
-                    onClick={onBack} 
-                    className="flex items-center gap-2 text-[#003952] font-bold bg-white border border-gray-100 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all shadow-sm text-sm"
-                >
+                <button onClick={onBack} className="flex items-center gap-2 text-[#003952] font-bold bg-white border border-gray-100 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all shadow-sm text-sm">
                     <ChevronLeft size={18} /> Volver al Inicio
                 </button>
                 <div className="flex items-center gap-2 text-[10px] font-bold text-[#003952] uppercase bg-white px-3 py-1.5 rounded-full border border-green-100 shadow-sm">
@@ -129,55 +157,42 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
             </div>
 
             <article className="max-w-5xl mx-auto p-10 md:p-16">
-                {/* 2. ETIQUETA DE CATEGORÍA */}
                 <div className="mb-6">
                     <span className="bg-red-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider">
                         {noticia.category}
                     </span>
                 </div>
 
-                {/* 3. TÍTULO */}
                 <h1 className="text-5xl md:text-6xl font-black text-[#003952] mb-8 leading-[1.1] tracking-tight">
                     {noticia.title}
                 </h1>
 
-                {/* 4. METADATOS */}
                 <div className="flex flex-wrap items-center gap-6 text-gray-400 text-sm mb-8">
                     <span className="flex items-center gap-2 font-medium"><Calendar size={18} className="text-gray-300" /> {noticia.date}</span>
                     <span className="flex items-center gap-2 font-medium"><BookOpen size={18} className="text-gray-300" /> {noticia.views || 0} Vistas</span>
                 </div>
 
-                {/* 5. IMAGEN PRINCIPAL */}
                 {noticia.imageUrl && (
                     <div className="mb-12 rounded-3xl overflow-hidden shadow-xl ring-1 ring-gray-100">
-                        <img 
-                            src={noticia.imageUrl} 
-                            alt={noticia.title} 
-                            className="w-full h-auto max-h-[500px] object-cover hover:scale-[1.02] transition-transform duration-500"
-                        />
+                        <img src={noticia.imageUrl} alt={noticia.title} className="w-full h-auto max-h-[500px] object-cover hover:scale-[1.02] transition-transform duration-500" />
                     </div>
                 )}
 
-                {/* 6. CUERPO DE LA NOTICIA */}
                 <div className="text-gray-700 text-[17px] leading-[1.8] space-y-8">
                     <div className="border-l-[5px] border-[#003952] pl-6 py-1 my-10 bg-gray-50/50 rounded-r-xl">
-                        <p className="text-gray-500 italic text-lg font-medium">
-                            {noticia.description}
-                        </p>
+                        <p className="text-gray-500 italic text-lg font-medium">{noticia.description}</p>
                     </div>
-                    
                     <div className="font-normal prose prose-slate max-w-none">
-                        <p>Contenido completo de la noticia cargado satisfactoriamente desde la base de datos de administración.</p>
+                        <p>Contenido completo de la noticia cargado satisfactoriamente desde la base de datos.</p>
                     </div>
                 </div>
 
-                {/* SECCIÓN DE COMENTARIOS */}
+                {/* SECCIÓN DE COMENTARIOS CON EXPANSIÓN */}
                 <section className="mt-24 pt-12 border-t border-gray-100">
                     <h3 className="text-2xl font-black text-[#003952] mb-10 flex items-center gap-3">
                         <MessageCircle size={28} /> Moderación de Comentarios ({comentarios.length})
                     </h3>
 
-                    {/* Caja de Comentario General */}
                     <div className="bg-white p-6 rounded-3xl mb-12 border border-gray-100 shadow-sm ring-1 ring-gray-50">
                         <textarea 
                             value={nuevoComentario}
@@ -187,24 +202,21 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
                             rows={3}
                         />
                         <div className="flex justify-end pt-4 border-t border-gray-50">
-                            <button onClick={agregarComentario} className="bg-[#003952] text-white px-8 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-[#002a3a] transition-all shadow-md">
+                            <button onClick={agregarComentario} className="bg-[#003952] text-white px-8 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-[#002a3a] transition-all">
                                 <Send size={14} /> Publicar Comentario
                             </button>
                         </div>
                     </div>
 
                     <div className="space-y-8">
-                        {comentariosOrdenados.map(c => (
+                        {comentariosVisibles.map((c: any) => (
                             <div key={c.id} className="space-y-4">
-                                {/* DISEÑO COMENTARIO LECTOR */}
                                 <div className={`group relative p-8 rounded-3xl border transition-all ${c.fijado ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-gray-50'} ${c.oculto ? 'opacity-40 grayscale' : ''} hover:shadow-md`}>
                                     {c.fijado && <div className="absolute -top-3 left-10 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-sm"><Pin size={10} fill="white" /> FIJADO</div>}
 
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-[#f1f5f9] flex items-center justify-center font-black text-gray-400 shadow-sm">
-                                                {c.autor[0]}
-                                            </div>
+                                            <div className="w-12 h-12 rounded-2xl bg-[#f1f5f9] flex items-center justify-center font-black text-gray-400">{c.autor[0]}</div>
                                             <div>
                                                 <h4 className="font-bold text-base text-[#003952]">{c.autor}</h4>
                                                 <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">{c.fecha}</span>
@@ -215,39 +227,27 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
                                             <button onClick={() => toggleFijar(c.id)} className={`p-2.5 rounded-xl transition-all ${c.fijado ? 'text-blue-600 bg-blue-50' : 'text-gray-300 hover:bg-gray-50'}`}><Pin size={18} /></button>
                                             <button onClick={() => toggleDestacar(c.id)} className={`p-2.5 rounded-xl transition-all ${c.destacado ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:bg-gray-50'}`}><Star size={18} /></button>
                                             <button onClick={() => toggleOcultar(c.id)} className={`p-2.5 rounded-xl transition-all ${c.oculto ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:bg-gray-50'}`}>{c.oculto ? <Eye size={18} /> : <EyeOff size={18} />}</button>
-                                            <button onClick={() => eliminarComentario(c.id)} className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={18} /></button>
+                                            <button onClick={() => eliminarComentario(c.id)} className="p-2.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl"><Trash2 size={18} /></button>
                                         </div>
                                     </div>
                                     <p className="text-[15px] text-gray-600 leading-relaxed pl-[64px] font-medium">{c.texto}</p>
 
-                                    {/* INPUT PARA RESPONDER */}
                                     {replyTo === c.id && (
-                                        <div className="mt-6 ml-[64px] p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in slide-in-from-top-2 duration-300">
-                                            <textarea 
-                                                value={textoRespuesta}
-                                                onChange={(e) => setTextoRespuesta(e.target.value)}
-                                                placeholder="Escribe tu respuesta como administrador..."
-                                                className="w-full bg-transparent outline-none text-sm resize-none"
-                                                rows={2}
-                                            />
+                                        <div className="mt-6 ml-[64px] p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                            <textarea value={textoRespuesta} onChange={(e) => setTextoRespuesta(e.target.value)} placeholder="Escribe tu respuesta..." className="w-full bg-transparent outline-none text-sm resize-none" rows={2} />
                                             <div className="flex justify-end gap-2 mt-2">
                                                 <button onClick={() => setReplyTo(null)} className="px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600">Cancelar</button>
-                                                <button onClick={() => enviarRespuesta(c.id)} className="bg-[#003952] text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
-                                                    <Send size={12} /> Responder
-                                                </button>
+                                                <button onClick={() => enviarRespuesta(c.id)} className="bg-[#003952] text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2"><Send size={12} /> Responder</button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* DISEÑO RESPUESTA ADMINISTRADOR */}
-                                {c.respuestas?.map(r => (
+                                {c.respuestas?.map((r: any) => (
                                     <div key={r.id} className="ml-16 p-8 rounded-3xl bg-[#f8fafc] border border-blue-50 transition-all">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center font-black text-[#003952] shadow-sm">
-                                                    {r.autor[0]}
-                                                </div>
+                                                <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center font-black text-[#003952]">A</div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <h4 className="font-bold text-base text-[#003952]">{r.autor}</h4>
@@ -256,7 +256,6 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
                                                     <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">{r.fecha}</span>
                                                 </div>
                                             </div>
-                                            <div className="text-[11px] text-gray-300 font-medium">Hace un momento</div>
                                         </div>
                                         <p className="text-[15px] text-gray-600 leading-relaxed pl-[64px] font-medium">{r.texto}</p>
                                     </div>
@@ -264,6 +263,18 @@ export default function NoticiaCompleta({ noticia, onBack }: NoticiaCompletaProp
                             </div>
                         ))}
                     </div>
+
+                    {/* BOTÓN MOSTRAR MÁS */}
+                    {comentarios.length > 2 && (
+                        <div className="mt-10 flex justify-center">
+                            <button 
+                                onClick={() => setShowAllComent(!showAllComments)}
+                                className="flex items-center gap-2 px-8 py-3 bg-gray-50 text-[#003952] font-bold rounded-2xl border border-gray-100 hover:bg-[#003952] hover:text-white transition-all shadow-sm"
+                            >
+                                {showAllComments ? (<>Mostrar menos <ChevronUp size={18} /></>) : (<>Ver todos ({comentarios.length}) <ChevronDown size={18} /></>)}
+                            </button>
+                        </div>
+                    )}
                 </section>
             </article>
         </div>
