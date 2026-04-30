@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Edit, Trash2, Plus, ChevronLeft, ChevronRight, Eye, Heart, 
   ArrowRight, Search, MessageCircle, X, ChevronDown, ChevronUp 
@@ -30,11 +30,20 @@ interface SidebarItem {
 }
 
 export default function InicioAdminPage() {
+  // --- ESTADOS PARA TOAST ---
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const triggerToast = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   // --- ESTADOS ---
   const [searchTerm, setSearchTerm] = useState('');
   const [displayedNews, setDisplayedNews] = useState<NewsItem | null>(null);
 
-  // Estados para Sidebar (Qué está pasando)
   const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([
     { id: 1, title: '¡Consigue trabajo!', desc: 'Explora oportunidades relevantes ahora.' },
     { id: 2, title: 'Conferencia', desc: 'Congreso Internacional ANEUPI.' },
@@ -45,7 +54,6 @@ export default function InicioAdminPage() {
   const [editingSidebar, setEditingSidebar] = useState<SidebarItem | null>(null);
   const [showAllSidebar, setShowAllSidebar] = useState(false);
 
-  // Estados de Noticias
   const [featuredNewsList, setFeaturedNewsList] = useState<NewsItem[]>([
     { 
       id: 1, category: 'DEPORTES', title: 'Deporte: victoria histórica en el torneo', 
@@ -56,47 +64,15 @@ export default function InicioAdminPage() {
   ]);
 
   const [masNoticias, setMasNoticias] = useState<NewsItem[]>([
-    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo, se establecieron nuevas normativas de mutuo acuerdo.', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, comments: 15, color: 'bg-slate-700', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
+    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo...', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, comments: 15, color: 'bg-slate-700', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
   ]);
 
   const [otrasNoticias, setOtrasNoticias] = useState<NewsItem[]>([
-    { id: 201, title: 'Mercados asiáticos cierran al alza tras anuncios económicos', description: 'Las principales bolsas reaccionaron positivamente a las políticas fiscales.', category: 'INTERNACIONAL', date: '16 Oct 2025', views: 920, likes: 450, comments: 8, color: 'bg-emerald-800', imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=500&auto=format&fit=crop' },
+    { id: 201, title: 'Mercados asiáticos cierran al alza...', description: 'Las principales bolsas...', category: 'INTERNACIONAL', date: '16 Oct 2025', views: 920, likes: 450, comments: 8, color: 'bg-emerald-800', imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=500&auto=format&fit=crop' },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<{news: NewsItem, section: string} | null>(null);
-
-/* ==========================================================================
-     LÓGICA PARA EL EQUIPO DE BACKEND (DESCOMENTAR PARA INTEGRAR)
-     ==========================================================================
-  
-  // 1. CARGA INICIAL DE NOTICIAS Y SIDEBAR DESDE LA DB
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        // const newsRes = await fetch('/api/noticias');
-        // const sidebarRes = await fetch('/api/sidebar');
-        // const newsData = await newsRes.json();
-        // const sidebarData = await sidebarRes.json();
-        // Separar newsData por secciones y actualizar estados...
-      } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
-    fetchData();
-  }, []);
-
-  // 2. GUARDAR / EDITAR NOTICIA EN DB
-  const handleSaveNewsToDB = async (payload: any) => {
-    const method = editingData ? 'PUT' : 'POST';
-    const url = editingData ? `/api/noticias/${editingData.news.id}` : '/api/noticias';
-    // try { const res = await fetch(url, { method, body: JSON.stringify(payload) }); ... }
-  };
-
-  // 3. ELIMINAR NOTICIA EN DB
-  const deleteNewsFromDB = async (id: number) => {
-    // try { await fetch(`/api/noticias/${id}`, { method: 'DELETE' }); ... }
-  };
-  ========================================================================== */
 
   // --- FUNCIONES SIDEBAR ---
   const handleSaveSidebar = (e: React.FormEvent<HTMLFormElement>) => {
@@ -107,8 +83,10 @@ export default function InicioAdminPage() {
 
     if (editingSidebar) {
       setSidebarItems(sidebarItems.map(item => item.id === editingSidebar.id ? { ...item, title, desc } : item));
+      triggerToast("Se editó correctamente");
     } else {
       setSidebarItems([{ id: Date.now(), title, desc }, ...sidebarItems]);
+      triggerToast("Se guardó correctamente");
     }
     setIsSidebarModalOpen(false);
     setEditingSidebar(null);
@@ -117,21 +95,9 @@ export default function InicioAdminPage() {
   const deleteSidebarItem = (id: number) => {
     if (confirm('¿Eliminar este aviso?')) {
       setSidebarItems(sidebarItems.filter(item => item.id !== id));
+      triggerToast("Se eliminó correctamente");
     }
   };
-
-  // --- LÓGICA DE BÚSQUEDA ---
-  const matchSearch = (news: NewsItem) => 
-    news.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    news.category.toLowerCase().includes(searchTerm.toLowerCase());
-
-  const displayFeaturedList = featuredNewsList.filter(matchSearch);
-  const displayMasNoticias = masNoticias.filter(matchSearch);
-  const displayOtrasNoticias = otrasNoticias.filter(matchSearch);
-
-  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
-  const safeIndex = displayFeaturedList.length > 0 && currentFeaturedIndex >= displayFeaturedList.length ? 0 : currentFeaturedIndex;
-  const featuredNews = displayFeaturedList[safeIndex];
 
   // --- FUNCIONES GESTIÓN NOTICIAS ---
   const openEditModal = (news: NewsItem, section: string) => {
@@ -139,14 +105,15 @@ export default function InicioAdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteNews = async (id: number, section: string) => {
+  const handleDeleteNews = (id: number, section: string) => {
     if (!confirm('¿Estás seguro de eliminar esta noticia?')) return;
     if (section === 'featured') setFeaturedNewsList(prev => prev.filter(n => n.id !== id));
     if (section === 'mas') setMasNoticias(prev => prev.filter(n => n.id !== id));
     if (section === 'otras') setOtrasNoticias(prev => prev.filter(n => n.id !== id));
+    triggerToast("Se eliminó correctamente");
   };
 
-  const handleSaveNews = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveNews = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const payload = {
@@ -171,6 +138,9 @@ export default function InicioAdminPage() {
       if (editingData.section === 'featured') setFeaturedNewsList(prev => prev.filter(n => n.id !== editingData.news.id));
       if (editingData.section === 'mas') setMasNoticias(prev => prev.filter(n => n.id !== editingData.news.id));
       if (editingData.section === 'otras') setOtrasNoticias(prev => prev.filter(n => n.id !== editingData.news.id));
+      triggerToast("Se editó correctamente");
+    } else {
+      triggerToast("Se guardó correctamente");
     }
 
     if (payload.section === 'featured') setFeaturedNewsList(prev => [newItem, ...prev]);
@@ -180,9 +150,29 @@ export default function InicioAdminPage() {
     setIsModalOpen(false);
   };
 
+  const matchSearch = (news: NewsItem) => 
+    news.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    news.category.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const displayFeaturedList = featuredNewsList.filter(matchSearch);
+  const displayMasNoticias = masNoticias.filter(matchSearch);
+  const displayOtrasNoticias = otrasNoticias.filter(matchSearch);
+
+  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
+  const safeIndex = displayFeaturedList.length > 0 && currentFeaturedIndex >= displayFeaturedList.length ? 0 : currentFeaturedIndex;
+  const featuredNews = displayFeaturedList[safeIndex];
+
   return (
     <div className="space-y-10 relative">
       <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
+
+      {/* TOAST FLOTANTE */}
+      {showToast && (
+        <div className="fixed bottom-10 right-10 bg-white border border-gray-100 shadow-2xl rounded-xl p-4 flex flex-col min-w-[250px] z-[200] animate-in slide-in-from-right duration-300">
+          <p className="text-sm font-bold text-gray-800">Operación exitosa</p>
+          <p className="text-[12px] text-gray-500">{toastMessage}</p>
+        </div>
+      )}
 
       {displayedNews ? (
         <NoticiaCompleta noticia={displayedNews} onBack={() => setDisplayedNews(null)} />
@@ -217,7 +207,7 @@ export default function InicioAdminPage() {
                     <button onClick={() => openEditModal(featuredNews, 'featured')} className="bg-white/90 text-[#003952] p-2 rounded-lg shadow-lg"><Edit size={16} /></button>
                     <button onClick={() => handleDeleteNews(featuredNews.id, 'featured')} className="bg-red-600/90 text-white p-2 rounded-lg shadow-lg"><Trash2 size={16} /></button>
                   </div>
-                  <div className={`h-[340px] bg-slate-800 relative flex items-center justify-center transition-colors duration-500 overflow-hidden`}>
+                  <div className={`h-[340px] bg-slate-800 relative flex items-center justify-center overflow-hidden`}>
                     {featuredNews.imageUrl && <img src={featuredNews.imageUrl} alt={featuredNews.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0"></div>
                     <span className="absolute top-5 left-5 bg-red-600 text-white text-[11px] font-bold px-3 py-1.5 uppercase rounded shadow-sm tracking-wider z-10">{featuredNews.category}</span>
@@ -236,7 +226,6 @@ export default function InicioAdminPage() {
               ) : null}
             </div>
 
-            {/* SIDEBAR: QUÉ ESTÁ PASANDO */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full">
                 <div className="flex justify-between items-center mb-6">
@@ -258,12 +247,8 @@ export default function InicioAdminPage() {
                       </div>
                     </div>
                   ))}
-
                   {sidebarItems.length > 3 && (
-                    <button 
-                      onClick={() => setShowAllSidebar(!showAllSidebar)}
-                      className="w-full text-center text-[#003952] text-[13px] font-bold py-2 mt-2 hover:underline flex items-center justify-center gap-2"
-                    >
+                    <button onClick={() => setShowAllSidebar(!showAllSidebar)} className="w-full text-center text-[#003952] text-[13px] font-bold py-2 mt-2 hover:underline flex items-center justify-center gap-2">
                       {showAllSidebar ? <>Mostrar menos <ChevronUp size={14}/></> : <>Mostrar más <ChevronDown size={14}/></>}
                     </button>
                   )}
@@ -272,7 +257,6 @@ export default function InicioAdminPage() {
             </div>
           </div>
 
-          {/* SECCIONES DE NOTICIAS */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mt-8">
             <h3 className="font-bold text-[22px] text-[#003952] px-4 pt-4 mb-6">Más Noticias</h3>
             <div id="scroll-mas-noticias" className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide px-4">
@@ -282,8 +266,13 @@ export default function InicioAdminPage() {
                     {noticia.imageUrl && <img src={noticia.imageUrl} alt={noticia.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
                     <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm z-10">{noticia.category}</span>
                   </div>
+                  
                   <div className="p-5 flex-1 flex flex-col">
                     <h3 className="font-bold text-[16px] mb-2 line-clamp-2">{noticia.title}</h3>
+                    {/* DESCRIPCIÓN AGREGADA */}
+                    <p className="text-[13px] text-gray-500 mb-4 line-clamp-2 leading-relaxed italic">
+                      {noticia.description}
+                    </p>
                     <div className="flex justify-between items-center mt-auto mb-4">
                       <p className="text-[12px] text-gray-400">{noticia.date}</p>
                       <button onClick={() => setDisplayedNews(noticia)} className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-[12px] font-bold">Leer más</button>
@@ -295,8 +284,8 @@ export default function InicioAdminPage() {
                         <span className="flex gap-1.5 items-center"><MessageCircle size={14}/> {noticia.comments || 0}</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => openEditModal(noticia, 'mas')} className="p-1.5 text-gray-400 border border-gray-200 rounded hover:text-[#003952] transition-colors"><Edit size={16}/></button>
-                        <button onClick={() => handleDeleteNews(noticia.id, 'mas')} className="p-1.5 text-gray-400 border border-gray-200 rounded hover:text-red-600 transition-colors"><Trash2 size={16}/></button>
+                        <button onClick={() => openEditModal(noticia, 'mas')} className="p-1.5 text-gray-400 border border-gray-200 rounded hover:text-[#003952] transition-all"><Edit size={16}/></button>
+                        <button onClick={() => handleDeleteNews(noticia.id, 'mas')} className="p-1.5 text-gray-400 border border-gray-200 rounded hover:text-red-600 transition-all"><Trash2 size={16}/></button>
                       </div>
                     </div>
                   </div>
@@ -305,7 +294,7 @@ export default function InicioAdminPage() {
             </div>
           </div>
 
-          {/* SECCIÓN INTERNACIONALES */}
+               {/* SECCIÓN INTERNACIONALES */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mt-8">
             <h3 className="font-bold text-[22px] text-[#003952] px-4 pt-4 mb-6">Noticias Internacionales</h3>
             <div id="scroll-otras-noticias" className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide px-4">
@@ -316,6 +305,10 @@ export default function InicioAdminPage() {
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
                     <h3 className="font-bold text-[16px] mb-2 line-clamp-2">{noticia.title}</h3>
+                    {/* DESCRIPCIÓN AGREGADA */}
+                    <p className="text-[13px] text-gray-500 mb-4 line-clamp-2 leading-relaxed italic">
+                      {noticia.description}
+                    </p>
                     <div className="flex justify-between items-center mt-auto mb-4">
                       <p className="text-xs text-gray-400">{noticia.date}</p>
                       <button onClick={() => setDisplayedNews(noticia)} className="bg-[#003952] text-white px-4 py-1.5 rounded-full text-xs font-bold">Leer más</button>
@@ -338,8 +331,7 @@ export default function InicioAdminPage() {
           </div>
         </>
       )}
-
-      {/* MODAL SIDEBAR EDITAR/CREAR */}
+      {/* MODAL SIDEBAR */}
       {isSidebarModalOpen && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
@@ -348,8 +340,8 @@ export default function InicioAdminPage() {
               <button onClick={() => setIsSidebarModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
             </div>
             <form onSubmit={handleSaveSidebar} className="p-6 space-y-4">
-              <input type="text" name="title" defaultValue={editingSidebar?.title || ''} placeholder="Ej: Gana dinero" className="w-full px-4 py-2 border rounded-xl outline-none" required />
-              <textarea name="desc" rows={2} defaultValue={editingSidebar?.desc || ''} placeholder="Ej: Descripción del aviso..." className="w-full px-4 py-2 border rounded-xl outline-none resize-none" required />
+              <input type="text" name="title" defaultValue={editingSidebar?.title || ''} placeholder="Ej: Tecnología en 2023" className="w-full px-4 py-2 border rounded-xl outline-none"  required />
+              <textarea name="desc" rows={2} defaultValue={editingSidebar?.desc || ''} placeholder="Ej: Una nueva técnica de IA está revolucionando el mercado" className="w-full px-4 py-2 border rounded-xl outline-none resize-none" required />
               <div className="flex gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setIsSidebarModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-xl">Cancelar</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-[#003952] text-white rounded-xl font-bold">Guardar</button>
@@ -359,7 +351,7 @@ export default function InicioAdminPage() {
         </div>
       )}
 
-      {/* MODAL NOTICIAS EDITAR/CREAR */}
+      {/* MODAL NOTICIAS */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in duration-200">
@@ -370,11 +362,11 @@ export default function InicioAdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-gray-700 font-medium text-sm mb-1">Título</label>
-                  <input type="text" name="title" defaultValue={editingData?.news.title || ''} placeholder="Ej: III Congreso Internacional" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required />
+                  <input type="text" name="title" defaultValue={editingData?.news.title || ''} placeholder="Ej: Nueva Innovación en Tecnología" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1">Categoría</label>
-                  <input type="text" name="category" defaultValue={editingData?.news.category || ''} placeholder="Ej: Educación" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none uppercase" required />
+                  <input type="text" name="category" defaultValue={editingData?.news.category || ''} placeholder="Ej: TECNOLOGÍA" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none uppercase" required />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1">Ubicación</label>
@@ -390,7 +382,7 @@ export default function InicioAdminPage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-gray-700 font-medium text-sm mb-1">Resumen</label>
-                  <textarea name="description" rows={3} defaultValue={editingData?.news.description || ''} placeholder="Ej: Descripción de la noticia..." className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none resize-none"></textarea>
+                  <textarea name="description" rows={3} defaultValue={editingData?.news.description || ''} placeholder="Ej: Una nueva técnica de IA está revolucionando el mercado" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none resize-none"></textarea>
                 </div>
               </div>
               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">

@@ -132,7 +132,7 @@ export default function AsistenteVirtualAdmin() {
               <button onClick={() => setActiveTab('unresolved')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'unresolved' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><MessageSquare size={16} /> No resueltas</button>
               <button onClick={() => setActiveTab('streams')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'streams' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Play size={16} /> Streams Solicitados</button>
             </div>
-//RENDERIZADO DE PESTANIAS
+
             <div className="min-h-[400px]">
               {activeTab === 'intents' && <IntentsTab data={intenciones} onEdit={(item) => handleOpenModal('edit', item)} onToggleStatus={handleToggleStatus} />}
               {activeTab === 'forms' && <UnresolvedForm data={formulariosRecibidos} onMarkAsRead={handleMarkFormAsRead} />}

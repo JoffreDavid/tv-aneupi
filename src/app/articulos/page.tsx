@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Share2, Eye, Heart, MessageCircle, Calendar, User, ArrowRight, BookOpen } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Share2, Eye, Heart, MessageCircle, Calendar, User, ArrowRight, BookOpen, Check } from 'lucide-react';
 // IMPORTANTE: Asegúrate de tener el archivo ArticuloCompleto.tsx en la misma carpeta
 import ArticuloCompleto from './articuloCompleto'; 
 
@@ -28,6 +28,21 @@ interface Trending {
 }
 
 export default function ArticulosAdminPage() {
+    // --- ESTADO PARA MENSAJES DE CONFIRMACIÓN ---
+    const [notificacion, setNotificacion] = useState<string | null>(null);
+    const [showToast, setShowToast] = useState(false);
+
+    useEffect(() => {
+        if (notificacion) {
+            setShowToast(true);
+            const timer = setTimeout(() => {
+                setShowToast(false);
+                setNotificacion(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notificacion]);
+
     // --- ESTADOS ---
     const [searchTerm, setSearchTerm] = useState('');
     const [displayedArticle, setDisplayedArticle] = useState<Article | null>(null); 
@@ -37,8 +52,8 @@ export default function ArticulosAdminPage() {
     const [selectedTrending, setSelectedTrending] = useState<Trending | null>(null);
 
     const openTrendingModal = (item: Trending | null = null) => {
-    setSelectedTrending(item);
-    setIsTrendingModalOpen(true);
+        setSelectedTrending(item);
+        setIsTrendingModalOpen(true);
     };
 
     // Función para guardar o actualizar tendencia
@@ -52,9 +67,11 @@ export default function ArticulosAdminPage() {
             setTrending(trending.map(t => 
                 t.id === selectedTrending.id ? { ...t, title, views } : t
             ));
+            setNotificacion("Se editó correctamente");
         } else {
             const nuevo = { id: Date.now(), title, views };
             setTrending([...trending, nuevo]);
+            setNotificacion("Se guardó correctamente");
         }
         setIsTrendingModalOpen(false);
     };
@@ -63,6 +80,7 @@ export default function ArticulosAdminPage() {
     const deleteTrending = (id: number) => {
         if (confirm('¿Eliminar esta tendencia del panel editorial?')) {
             setTrending(trending.filter(t => t.id !== id));
+            setNotificacion("Se eliminó correctamente");
         }
     };
 
@@ -86,7 +104,7 @@ export default function ArticulosAdminPage() {
     const [trending, setTrending] = useState<Trending[]>([
         { id: 1, title: 'III Congreso Internacional', views: '115 usuarios' },
         { id: 2, title: 'Foro de Innovación', views: '980 usuarios' },
-        { id: 3, title: 'Encuentro de Educación Digital', views: '3,459 usuarios' }, // Elemento necesario para activar el botón
+        { id: 3, title: 'Encuentro de Educación Digital', views: '3,459 usuarios' },
     ]);
 
     // --- LÓGICA DE BÚSQUEDA Y AGRUPACIÓN ---
@@ -114,12 +132,13 @@ export default function ArticulosAdminPage() {
             author: formData.get('author') as string,
             category: formData.get('category') as string,
             imageUrl: formData.get('imageUrl') as string,
-            url: formData.get('url') as string, // URL de Redirección
+            url: formData.get('url') as string, 
             description: formData.get('description') as string,
         };
 
         if (selectedArticle) {
             setArticles(articles.map(a => a.id === selectedArticle.id ? { ...a, ...articleData } : a));
+            setNotificacion("Se editó correctamente");
         } else {
             const nuevo = { 
                 ...articleData, 
@@ -128,6 +147,7 @@ export default function ArticulosAdminPage() {
                 views: 0, likes: 0, comments: 0, imageColor: 'bg-slate-700' 
             };
             setArticles([nuevo, ...articles]);
+            setNotificacion("Se guardó correctamente");
         }
         setIsModalOpen(false);
     };
@@ -140,6 +160,14 @@ export default function ArticulosAdminPage() {
     return (
         <div className="space-y-10 relative">
             <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
+
+            {/* MENSAJE DE NOTIFICACIÓN FLOTANTE */}
+            {showToast && (
+                <div className="fixed bottom-10 right-10 bg-white border border-gray-100 shadow-2xl rounded-xl p-4 flex flex-col min-w-[250px] z-[200] animate-in slide-in-from-right duration-300">
+                    <p className="text-sm font-bold text-gray-800">Operación exitosa</p>
+                    <p className="text-[12px] text-gray-500">{notificacion}</p>
+                </div>
+            )}
 
             {displayedArticle ? (
                 <ArticuloCompleto articulo={displayedArticle} onBack={() => setDisplayedArticle(null)} />
@@ -212,7 +240,12 @@ export default function ArticulosAdminPage() {
                                                         </div>
                                                         <div className="flex gap-1">
                                                             <button onClick={() => { setSelectedArticle(article); setIsModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded hover:bg-[#003952] hover:text-white transition-colors"><Edit size={14} /></button>
-                                                            <button onClick={() => setArticles(articles.filter(a => a.id !== article.id))} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"><Trash2 size={14} /></button>
+                                                            <button onClick={() => {
+                                                                if(confirm('¿Seguro que deseas eliminar este artículo?')) {
+                                                                    setArticles(articles.filter(a => a.id !== article.id));
+                                                                    setNotificacion("Se eliminó correctamente");
+                                                                }
+                                                            }} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"><Trash2 size={14} /></button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -268,10 +301,11 @@ export default function ArticulosAdminPage() {
                                 </div>
                             </div>
                         </div>
-                    </div> {/* CIERRE DEL GRID PRINCIPAL */}
+                    </div>
                 </>
-            )};
-                {/* MODAL GESTIÓN DE TENDENCIAS */}
+            )}
+
+            {/* MODAL TENDENCIAS */}
             {isTrendingModalOpen && (
                 <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-200">
@@ -280,43 +314,19 @@ export default function ArticulosAdminPage() {
                                 {selectedTrending ? 'Editar Tendencia' : 'Nueva Tendencia'}
                             </h2>
                         </div>
-
                         <form onSubmit={handleGuardarTrending} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Título de la Tendencia</label>
-                                <input
-                                    name="trendingTitle"
-                                    type="text"
-                                    defaultValue={selectedTrending?.title || ''}
-                                    placeholder="Ej: III Congreso Internacional"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#003952]/20"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Información de Usuarios / Vistas</label>
-                                <input
-                                    name="trendingViews"
-                                    type="text"
-                                    defaultValue={selectedTrending?.views || ''}
-                                    placeholder="Ej: 1,200 usuarios"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#003952]/20"
-                                    required
-                                />
-                            </div>
-
+                            <input name="trendingTitle" type="text" defaultValue={selectedTrending?.title || ''} placeholder="Ej: Tendencia de la Semana" className="w-full px-4 py-2 border rounded-lg outline-none" required />
+                            <input name="trendingViews" type="text" defaultValue={selectedTrending?.views || ''} placeholder="Ej: 1,200 usuarios" className="w-full px-4 py-2 border rounded-lg outline-none" required />
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setIsTrendingModalOpen(false)} className="flex-1 py-2 px-4 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
-                                <button type="submit" className="flex-1 py-2 px-4 bg-[#003952] text-white rounded-xl font-bold hover:bg-[#002a3a] transition-colors">
-                                    {selectedTrending ? 'Actualizar' : 'Publicar'}
-                                </button>
+                                <button type="button" onClick={() => setIsTrendingModalOpen(false)} className="flex-1 py-2 px-4 border text-gray-600 rounded-xl font-semibold hover:bg-gray-50">Cancelar</button>
+                                <button type="submit" className="flex-1 py-2 px-4 bg-[#003952] text-white rounded-xl font-bold">{selectedTrending ? 'Actualizar' : 'Publicar'}</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* MODAL ACTUALIZADO SEGÚN FORMATO SOLICITADO */}
+            {/* MODAL ARTÍCULOS */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
@@ -325,74 +335,29 @@ export default function ArticulosAdminPage() {
                                 {selectedArticle ? 'Editar Artículo' : 'Nuevo Artículo'}
                             </h2>
                         </div>
-
                         <form onSubmit={handleGuardarArticulo} className="p-6 space-y-4">
-                            {/* Título del Artículo con lógica de auto-llenado */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Título del Artículo</label>
-                                <input
-                                    name="title"
-                                    type="text"
-                                    placeholder="Escribe un título llamativo"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#003952]/20 focus:border-[#003952]"
-                                    required
-                                    onChange={(e) => {
-                                        // Solo auto-llenar si estamos creando un nuevo artículo
-                                        if (!selectedArticle) {
-                                            const slug = e.target.value
-                                                .toLowerCase()
-                                                .trim()
-                                                .replace(/[^\w\s-]/g, '') // Elimina caracteres especiales
-                                                .replace(/[\s_-]+/g, '-') // Reemplaza espacios por guiones
-                                                .replace(/^-+|-+$/g, ''); // Limpia guiones al inicio o final
-                                            
-                                            const urlInput = document.getElementsByName('url')[0] as HTMLInputElement;
-                                            if (urlInput) urlInput.value = `https://aneupi.com/${slug}`;
-                                        }
-                                    }}
-                                />
-                            </div>
-
+                            <input name="title" type="text" defaultValue={selectedArticle?.title || ''} placeholder="Ej: Nuevo Avance en Tecnología" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#003952]/20 focus:border-[#003952]" required 
+                                onChange={(e) => {
+                                    if (!selectedArticle) {
+                                        const slug = e.target.value.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                                        const urlInput = document.getElementsByName('url')[0] as HTMLInputElement;
+                                        if (urlInput) urlInput.value = `https://aneupi.com/${slug}`;
+                                    }
+                                }}
+                            />
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Autor</label>
-                                    <input name="author" type="text" defaultValue={selectedArticle?.author} placeholder="Ej: Ana Silva" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                                    <select name="category" defaultValue={selectedArticle?.category || 'TECNOLOGÍA'} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none bg-white">
-                                        <option value="TECNOLOGÍA">TECNOLOGÍA</option>
-                                        <option value="MEDIO AMBIENTE">MEDIO AMBIENTE</option>
-                                        <option value="ECONOMÍA">ECONOMÍA</option>
-                                    </select>
-                                </div>
+                                <input name="author" type="text" defaultValue={selectedArticle?.author} placeholder="Ej: Juan Pérez" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" required />
+                                <select name="category" defaultValue={selectedArticle?.category || 'TECNOLOGÍA'} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none bg-white">
+                                    <option value="TECNOLOGÍA">TECNOLOGÍA</option>
+                                    <option value="MEDIO AMBIENTE">MEDIO AMBIENTE</option>
+                                    <option value="ECONOMÍA">ECONOMÍA</option>
+                                </select>
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">URL de la Imagen (Opcional)</label>
-                                <input name="imageUrl" type="url" defaultValue={selectedArticle?.imageUrl} placeholder="https://ejemplo.com/imagen.jpg" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
-                            </div>
-
-                            {/* URL de Redirección (Se llena automáticamente) */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">URL de Redirección (Leer más)</label>
-                                <input
-                                    name="url"
-                                    type="url"
-                                    defaultValue={selectedArticle?.url}
-                                    placeholder="https://aneupi.com/articulo"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#003952]/20"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Resumen / Descripción</label>
-                                <textarea name="description" rows={3} defaultValue={selectedArticle?.description} placeholder="Escribe un breve resumen..." className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none resize-none" required />
-                            </div>
-
+                            <input name="imageUrl" type="url" defaultValue={selectedArticle?.imageUrl} placeholder="URL de la Imagen (Opcional)" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
+                            <input name="url" type="url" defaultValue={selectedArticle?.url} placeholder="URL de Redirección" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" required />
+                            <textarea name="description" rows={3} defaultValue={selectedArticle?.description} placeholder="Resumen / Descripción" className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none resize-none" required />
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 px-4 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-semibold">Cancelar</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 px-4 border text-gray-600 rounded-xl hover:bg-gray-50 font-semibold">Cancelar</button>
                                 <button type="submit" className="flex-1 py-3 px-4 bg-[#003952] text-white rounded-xl font-bold">
                                     {selectedArticle ? 'Guardar Cambios' : 'Publicar Artículo'}
                                 </button>
