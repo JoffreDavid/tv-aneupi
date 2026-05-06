@@ -63,7 +63,7 @@ export default function InicioAdminPage() {
   ]);
 
   const [masNoticias, setMasNoticias] = useState<NewsItem[]>([
-    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo, se establecieron nuevas normativas de mutuo acuerdo.', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, comments: 15, color: 'bg-slate-700', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
+    { id: 101, title: 'Dirigentes indígenas y el Gobierno llegan a un acuerdo histórico', description: 'Tras varias semanas de diálogo...', category: 'ECUADOR', date: '16 Oct 2025', views: 850, likes: 320, comments: 15, color: 'bg-slate-700', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=500&auto=format&fit=crop' },
   ]);
 
   const [otrasNoticias, setOtrasNoticias] = useState<NewsItem[]>([
@@ -90,7 +90,6 @@ export default function InicioAdminPage() {
   const [editingSidebar, setEditingSidebar] = useState<SidebarItem | null>(null);
   const [showAllSidebar, setShowAllSidebar] = useState(false);
 
-  // Estados de Modales de Noticias
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<{news: NewsItem, section: string} | null>(null);
 
@@ -160,7 +159,12 @@ export default function InicioAdminPage() {
   };
 
   const publicarDesdeTemporada = (news: NewsItem) => {
-    const noticiaPublicada = { ...news, id: Date.now(), date: new Date().toLocaleDateString('es-ES'), originalSection: 'mas' };
+    const noticiaPublicada = { 
+      ...news, 
+      id: Date.now(), 
+      date: new Date().toLocaleDateString('es-ES'),
+      originalSection: 'mas'
+    };
     setMasNoticias(prev => [noticiaPublicada, ...prev]);
     triggerToast("Noticia de temporada activada y publicada");
   };
@@ -218,7 +222,7 @@ export default function InicioAdminPage() {
   const featuredNews = displayFeaturedList[0];
 
   return (
-    <div className="space-y-10 relative">
+    <div className="space-y-6 md:space-y-10 relative px-4 md:px-0">
       <style dangerouslySetInnerHTML={{ __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }` }} />
 
       {/* ==========================================
@@ -236,18 +240,18 @@ export default function InicioAdminPage() {
       ) : (
         <>
           {/* ==========================================
-              9. CABECERA Y BUSCADOR
+              9. CABECERA Y BUSCADOR (RESPONSIVO)
               ========================================== */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-5">
-            <div className="flex flex-col">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-gray-200 pb-5">
+            <div className="flex flex-col w-full lg:w-auto">
               <div className="flex items-center gap-4">
-                <div className="w-2.5 h-10 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
-                <h1 className="text-[42px] md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">Inicio</h1>
+                <div className="w-2 h-8 md:w-2.5 md:h-12 bg-gradient-to-b from-[#003952] to-blue-500 rounded-full shadow-sm"></div>
+                <h1 className="text-3xl md:text-[50px] font-black text-[#003952] tracking-tighter leading-none">Inicio</h1>
               </div>
-              <p className="text-[15px] text-gray-500 mt-2 ml-[26px]">Gestiona la portada principal y el contenido destacado que ven tus usuarios.</p>
+              <p className="text-sm md:text-[15px] text-gray-500 mt-2 ml-6 md:ml-[26px]">Gestiona la portada principal y el contenido destacado que ven tus usuarios.</p>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input type="text" placeholder="Buscar noticia..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg outline-none text-[14px] shadow-sm" />
@@ -261,49 +265,22 @@ export default function InicioAdminPage() {
           {/* ==========================================
               10. TABS DE NAVEGACIÓN
               ========================================== */}
-          <div className="flex gap-8 border-b border-gray-100">
-            <button onClick={() => setActiveTab('publicado')} className={`pb-4 px-2 text-sm font-bold transition-all ${activeTab === 'publicado' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}>Publicados</button>
-            <button onClick={() => setActiveTab('temporadas')} className={`pb-4 px-2 text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'temporadas' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400'}`}>Temporadas <span className="bg-blue-50 px-2 py-0.5 rounded-full text-[10px] text-blue-600">{temporadas.length}</span></button>
-            <button onClick={() => setActiveTab('papelera')} className={`pb-4 px-2 text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'papelera' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-400'}`}>Papelera <span className="bg-red-50 px-2 py-0.5 rounded-full text-[10px] text-red-600">{papelera.length}</span></button>
+          <div className="flex gap-4 md:gap-8 border-b border-gray-100 overflow-x-auto scrollbar-hide">
+            <button onClick={() => setActiveTab('publicado')} className={`pb-4 px-2 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'publicado' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}>Publicados</button>
+            <button onClick={() => setActiveTab('temporadas')} className={`pb-4 px-2 text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'temporadas' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400'}`}>Temporadas <span className="bg-blue-50 px-2 py-0.5 rounded-full text-[10px] text-blue-600">{temporadas.length}</span></button>
+            <button onClick={() => setActiveTab('papelera')} className={`pb-4 px-2 text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'papelera' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-400'}`}>Papelera <span className="bg-red-50 px-2 py-0.5 rounded-full text-[10px] text-red-600">{papelera.length}</span></button>
           </div>
 
           {activeTab === 'publicado' ? (
             <>
               {/* ==========================================
-                  11. GRID DE NOTICIAS PUBLICADAS
+                  11. GRID DE CONTENIDO PUBLICADO (RESPONSIVO)
                   ========================================== */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  {displayFeaturedList.length > 0 && featuredNews ? (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group h-full">
-                      <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                        <button onClick={() => openEditModal(featuredNews, 'featured')} className="bg-white/90 text-[#003952] p-2 rounded-lg shadow-lg"><Edit size={16} /></button>
-                        <button onClick={() => handleDeleteNews(featuredNews, 'featured')} className="bg-red-600/90 text-white p-2 rounded-lg shadow-lg"><Trash2 size={16} /></button>
-                      </div>
-                      <div className={`h-[340px] bg-slate-800 relative flex items-center justify-center overflow-hidden`}>
-                        {featuredNews.imageUrl && <img src={featuredNews.imageUrl} alt={featuredNews.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0"></div>
-                        <span className="absolute top-5 left-5 bg-red-600 text-white text-[11px] font-bold px-3 py-1.5 uppercase rounded shadow-sm tracking-wider z-10">{featuredNews.category}</span>
-                      </div>
-                      <div className="p-8 flex flex-col flex-1">
-                        <h2 className="text-[26px] font-bold text-[#003952] mb-3 leading-tight">{featuredNews.title}</h2>
-                        <p className="text-gray-600 mb-6 text-[15px] leading-relaxed line-clamp-2 italic">{featuredNews.description}</p>
-                        <div className="flex justify-between items-center mt-auto">
-                          <span className="text-[13px] font-medium text-gray-400">{featuredNews.date}</span>
-                          <button onClick={() => setDisplayedNews(featuredNews)} className="bg-[#003952] text-white px-6 py-2.5 rounded-full text-[14px] font-bold shadow-sm flex items-center gap-2">
-                            Leer más <ArrowRight size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* ==========================================
-                    12. SIDEBAR (QUÉ ESTÁ PASANDO)
-                    ========================================== */}
-                <div className="lg:col-span-1">
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full">
+              <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
+                
+                {/* --- SIDEBAR (SE MUEVE ARRIBA EN MÓVIL) --- */}
+                <div className="order-first lg:order-last lg:col-span-1">
+                  <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 h-full">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="font-bold text-[18px] text-[#003952]">Qué está pasando</h3>
                       <button onClick={() => { setEditingSidebar(null); setIsSidebarModalOpen(true); }} className="text-[#003952] hover:bg-blue-50 p-1.5 border-2 border-[#003952] rounded-xl transition-colors">
@@ -324,7 +301,6 @@ export default function InicioAdminPage() {
                         </div>
                       ))}
 
-                      {/* Lógica Mostrar Más/Menos Restaurada */}
                       {sidebarItems.length > 3 && (
                         <button 
                           onClick={() => setShowAllSidebar(!showAllSidebar)}
@@ -336,16 +312,44 @@ export default function InicioAdminPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* --- SLIDER / DESTACADO --- */}
+                <div className="lg:col-span-2">
+                  {displayFeaturedList.length > 0 && featuredNews ? (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group h-full">
+                      <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <button onClick={() => openEditModal(featuredNews, 'featured')} className="bg-white/90 text-[#003952] p-2 rounded-lg shadow-lg"><Edit size={16} /></button>
+                        <button onClick={() => handleDeleteNews(featuredNews, 'featured')} className="bg-red-600/90 text-white p-2 rounded-lg shadow-lg"><Trash2 size={16} /></button>
+                      </div>
+                      <div className={`h-[240px] md:h-[340px] bg-slate-800 relative flex items-center justify-center overflow-hidden`}>
+                        {featuredNews.imageUrl && <img src={featuredNews.imageUrl} alt={featuredNews.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0"></div>
+                        <span className="absolute top-5 left-5 bg-red-600 text-white text-[10px] md:text-[11px] font-bold px-3 py-1.5 uppercase rounded shadow-sm tracking-wider z-10">{featuredNews.category}</span>
+                      </div>
+                      <div className="p-6 md:p-8 flex flex-col flex-1">
+                        <h2 className="text-xl md:text-[26px] font-bold text-[#003952] mb-3 leading-tight">{featuredNews.title}</h2>
+                        <p className="text-gray-600 mb-6 text-sm md:text-[15px] leading-relaxed line-clamp-2 italic">{featuredNews.description}</p>
+                        <div className="flex justify-between items-center mt-auto">
+                          <span className="text-[12px] md:text-[13px] font-medium text-gray-400">{featuredNews.date}</span>
+                          <button onClick={() => setDisplayedNews(featuredNews)} className="bg-[#003952] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-[14px] font-bold shadow-sm flex items-center gap-2">
+                            Leer más <ArrowRight size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
               </div>
 
               {/* ==========================================
-                  13. SECCIÓN MÁS NOTICIAS
+                  13. SECCIÓN MÁS NOTICIAS (SCROLL HORIZONTAL)
                   ========================================== */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mt-8">
-                <h3 className="font-bold text-[22px] text-[#003952] px-4 pt-4 mb-6">Más Noticias</h3>
-                <div id="scroll-mas-noticias" className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide px-4">
+                <h3 className="font-bold text-lg md:text-[22px] text-[#003952] px-4 pt-4 mb-6">Más Noticias</h3>
+                <div id="scroll-mas-noticias" className="flex gap-4 md:gap-6 overflow-x-auto pb-6 scrollbar-hide px-4 snap-x">
                   {displayMasNoticias.map(noticia => (
-                    <div key={noticia.id} className="w-80 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col group">
+                    <div key={noticia.id} className="w-[280px] md:w-80 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col relative group snap-start">
                       <div className="h-40 bg-slate-200 relative overflow-hidden">
                         {noticia.imageUrl && <img src={noticia.imageUrl} alt={noticia.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
                         <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded-sm z-10">{noticia.category}</span>
@@ -377,10 +381,10 @@ export default function InicioAdminPage() {
                   14. SECCIÓN INTERNACIONALES
                   ========================================== */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mt-8">
-                <h3 className="font-bold text-[22px] text-[#003952] px-4 pt-4 mb-6">Noticias Internacionales</h3>
-                <div id="scroll-otras-noticias" className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide px-4">
+                <h3 className="font-bold text-lg md:text-[22px] text-[#003952] px-4 pt-4 mb-6">Noticias Internacionales</h3>
+                <div id="scroll-otras-noticias" className="flex gap-4 md:gap-6 overflow-x-auto pb-6 scrollbar-hide px-4 snap-x">
                   {displayOtrasNoticias.map(noticia => (
-                    <div key={noticia.id} className="w-80 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col group">
+                    <div key={noticia.id} className="w-[280px] md:w-80 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm flex flex-col group snap-start">
                       <div className="h-40 bg-slate-200 relative overflow-hidden">
                         {noticia.imageUrl && <img src={noticia.imageUrl} alt={noticia.title} className="absolute inset-0 w-full h-full object-cover z-0" />}
                       </div>
@@ -409,9 +413,9 @@ export default function InicioAdminPage() {
             </>
           ) : activeTab === 'temporadas' ? (
             /* ==========================================
-                15. VISTA DE TEMPORADAS
+                15. VISTA DE TEMPORADAS (RESPONSIVA)
                 ========================================== */
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8 min-h-[400px]">
               <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                 {displayTemporadas.length === 0 ? (
                   <div className="col-span-full text-center py-20">
@@ -421,24 +425,26 @@ export default function InicioAdminPage() {
                 ) : (
                   displayTemporadas.map(item => (
                     <div key={item.id} className="bg-gray-50 rounded-3xl border border-gray-100 overflow-hidden flex flex-col group hover:bg-white hover:shadow-xl transition-all duration-300">
-                      <div className="h-48 relative">
+                      <div className="h-40 md:h-48 relative">
                         {item.imageUrl && <img src={item.imageUrl} className="w-full h-full object-cover" />}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <span className="absolute bottom-4 left-6 bg-blue-600 text-white text-[10px] font-black px-3 py-1.5 uppercase rounded shadow-lg">{item.date}</span>
                       </div>
                       <div className="p-6 flex-1 flex flex-col">
-                        <h4 className="font-black text-[#003952] text-xl mb-3 leading-tight">{item.title}</h4>
+                        <h4 className="font-black text-[#003952] text-lg md:text-xl mb-3 leading-tight">{item.title}</h4>
                         <p className="text-gray-500 text-sm line-clamp-3 mb-6 italic">{item.description}</p>
-                        <div className="flex gap-3 mt-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                           <button onClick={() => publicarDesdeTemporada(item)} className="flex-1 bg-[#003952] text-white py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#002a3a] transition-all">
                             <Power size={14} /> Activar Noticia
                           </button>
-                          <button onClick={() => openEditModal(item, 'temporadas')} className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-[#003952] hover:border-[#003952] transition-all">
-                            <Edit size={16} />
-                          </button>
-                          <button onClick={() => handleDeleteNews(item, 'temporadas')} className="p-3 bg-white border border-gray-200 text-red-400 rounded-2xl hover:text-red-600 hover:border-red-600 transition-all">
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex gap-2">
+                             <button onClick={() => openEditModal(item, 'temporadas')} className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-[#003952] hover:border-[#003952] transition-all">
+                                <Edit size={16} />
+                             </button>
+                             <button onClick={() => handleDeleteNews(item, 'temporadas')} className="p-3 bg-white border border-gray-200 text-red-400 rounded-2xl hover:text-red-600 hover:border-red-600 transition-all">
+                                <Trash2 size={16} />
+                             </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -448,9 +454,9 @@ export default function InicioAdminPage() {
             </div>
           ) : (
             /* ==========================================
-                16. VISTA DE PAPELERA
+                16. VISTA DE PAPELERA (RESPONSIVA)
                 ========================================== */
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8 min-h-[400px]">
               <div className="max-w-4xl mx-auto space-y-4">
                 <div className="text-center pb-8">
                   <h3 className="text-xl font-bold text-[#003952]">Contenido en Papelera</h3>
@@ -463,20 +469,20 @@ export default function InicioAdminPage() {
                   </div>
                 ) : (
                   displayPapelera.map(item => (
-                    <div key={item.id} className="flex flex-col sm:flex-row justify-between items-center p-5 bg-gray-50 rounded-2xl border border-gray-100 gap-4 group hover:bg-white hover:shadow-md transition-all">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 rounded-xl bg-gray-200 overflow-hidden shrink-0">
+                    <div key={item.id} className="flex flex-col md:flex-row justify-between items-center p-4 md:p-5 bg-gray-50 rounded-2xl border border-gray-100 gap-4 group hover:bg-white hover:shadow-md transition-all">
+                      <div className="flex gap-4 items-center w-full md:w-auto">
+                        <div className="w-14 h-14 md:w-16 rounded-xl bg-gray-200 overflow-hidden shrink-0">
                           {item.imageUrl && <img src={item.imageUrl} className="w-full h-full object-cover" />}
                         </div>
-                        <div>
+                        <div className="overflow-hidden">
                           <h4 className="font-bold text-[#003952] text-sm line-clamp-1">{item.title}</h4>
                           <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{item.category} • {item.date}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={() => setPreviewItem(item)} className="p-2.5 text-gray-400 hover:text-[#003952] hover:bg-white rounded-xl border border-transparent hover:border-gray-200 transition-all shadow-sm"><Eye size={18} /></button>
-                        <button onClick={() => restaurarNoticia(item)} className="flex-1 sm:flex-none px-4 py-2 bg-[#003952] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#002a3a] transition-all"><RotateCcw size={14} /> Restaurar</button>
-                        <button onClick={() => eliminarPermanente(item.id)} className="flex-1 sm:flex-none px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-200 transition-all">Borrar</button>
+                      <div className="flex gap-2 w-full md:w-auto">
+                        <button onClick={() => setPreviewItem(item)} className="p-2.5 text-gray-400 hover:text-[#003952] hover:bg-white rounded-xl border border-gray-200 md:border-transparent transition-all shadow-sm flex-1 md:flex-none justify-center flex items-center"><Eye size={18} /></button>
+                        <button onClick={() => restaurarNoticia(item)} className="flex-[2] md:flex-none px-4 py-2 bg-[#003952] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#002a3a] transition-all"><RotateCcw size={14} /> Restaurar</button>
+                        <button onClick={() => eliminarPermanente(item.id)} className="flex-[2] md:flex-none px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold transition-all hover:bg-red-600 hover:text-white">Borrar</button>
                       </div>
                     </div>
                   ))
@@ -487,17 +493,15 @@ export default function InicioAdminPage() {
         </>
       )}
 
-      {/* ==========================================
-          17. MODAL VISTA PREVIA (VISTAZO RÁPIDO)
-          ========================================== */}
+      {/* --- MODAL VISTA PREVIA (RESPONSIVO) --- */}
       {previewItem && (
-        <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-md flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 md:p-6">
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-8">
-              <h2 className="text-2xl font-black text-[#003952] mb-4 leading-tight">{previewItem.title}</h2>
-              <p className="text-gray-500 text-[15px] leading-relaxed italic mb-8">{previewItem.description}</p>
-              <div className="flex gap-4 pt-6 border-t border-gray-100">
-                <button onClick={() => restaurarNoticia(previewItem)} className="flex-1 py-3 bg-[#003952] text-white rounded-xl font-bold">Restaurar ahora</button>
+            <div className="p-6 md:p-8">
+              <h2 className="text-xl md:text-2xl font-black text-[#003952] mb-4 leading-tight">{previewItem.title}</h2>
+              <p className="text-gray-500 text-sm md:text-[15px] leading-relaxed italic mb-8 max-h-[40vh] overflow-y-auto">{previewItem.description}</p>
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
+                <button onClick={() => restaurarNoticia(previewItem)} className="flex-1 py-3 bg-[#003952] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all">Restaurar ahora</button>
                 <button onClick={() => setPreviewItem(null)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold">Cerrar</button>
               </div>
             </div>
@@ -505,9 +509,7 @@ export default function InicioAdminPage() {
         </div>
       )}
 
-      {/* ==========================================
-          18. MODAL SIDEBAR (CREAR/EDITAR)
-          ========================================== */}
+      {/* --- MODAL SIDEBAR (RESPONSIVO) --- */}
       {isSidebarModalOpen && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
@@ -518,7 +520,7 @@ export default function InicioAdminPage() {
             <form onSubmit={handleSaveSidebar} className="p-6 space-y-4">
               <input type="text" name="title" defaultValue={editingSidebar?.title || ''} className="w-full px-4 py-2 border rounded-xl outline-none" placeholder="Título..." required />
               <textarea name="desc" rows={2} defaultValue={editingSidebar?.desc || ''} className="w-full px-4 py-2 border rounded-xl outline-none resize-none" placeholder="Descripción..." required />
-              <div className="flex gap-3 pt-4 border-t">
+              <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setIsSidebarModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-xl">Cancelar</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-[#003952] text-white rounded-xl font-bold">Guardar</button>
               </div>
@@ -527,15 +529,13 @@ export default function InicioAdminPage() {
         </div>
       )}
 
-      {/* ==========================================
-          19. MODAL NOTICIAS (CREAR/EDITAR)
-          ========================================== */}
+      {/* --- MODAL NOTICIAS (RESPONSIVO CON SCROLL) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh] animate-in fade-in duration-200">
+            <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center sticky top-0 z-10">
               <h2 className="!text-[22px] !text-[#003952] font-bold">{editingData ? 'Editar Noticia' : 'Crear Nueva Noticia'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
             </div>
             <form onSubmit={handleSaveNews} className="p-6 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -568,8 +568,8 @@ export default function InicioAdminPage() {
                   <textarea name="description" rows={3} defaultValue={editingData?.news.description || ''} placeholder="Descripción breve..." className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none resize-none"></textarea>
                 </div>
               </div>
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-xl font-medium transition-colors hover:bg-gray-50">Cancelar</button>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-xl font-medium transition-colors hover:bg-gray-50 order-last sm:order-first">Cancelar</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-[#003952] text-white rounded-xl font-bold transition-colors hover:bg-[#002233]">Finalizar Operación</button>
               </div>
             </form>
