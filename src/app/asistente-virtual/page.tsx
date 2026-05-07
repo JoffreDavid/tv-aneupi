@@ -18,7 +18,7 @@ export default function AsistenteVirtualAdmin() {
   const [selectedData, setSelectedData] = useState<any>(null);
   const [unresolvedLogs, setUnresolvedLogs] = useState<any[]>([]);
   
-  // ESTADO PARA LAS SOLICITUDES DE STREAM (Ahora definido correctamente)
+  // ESTADO PARA LAS SOLICITUDES DE STREAM
   const [solicitudesStream, setSolicitudesStream] = useState<any[]>([]);
 
   // NUEVO: Estado para rastrear qué consultas ya fueron convertidas en intenciones
@@ -41,7 +41,6 @@ export default function AsistenteVirtualAdmin() {
   ]);
 
   const handleUnresolvedQuery = (userMessage: string) => {
-    // Generamos un ID único para el log para poder rastrearlo
     const logId = `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newLog = {
       id: logId,
@@ -53,14 +52,12 @@ export default function AsistenteVirtualAdmin() {
     setUnresolvedLogs(prev => [newLog, ...prev]);
   };
 
-  
   const handleOpenModal = (mode: 'create' | 'edit', data: any = null) => {
     setModalMode(mode);
     setSelectedData(data);
     setIsModalOpen(true);
   };
 
-  // ACTUALIZACIÓN: Lógica para enviar a la pestaña correcta
   const handleFormReceived = (datos: any) => {
     const nuevoRegistro = { 
       ...datos, 
@@ -71,7 +68,7 @@ export default function AsistenteVirtualAdmin() {
     };
 
     if (datos.tipo === 'Promocion Stream') {
-      setSolicitudesStream(prev => [nuevoRegistro, ...prev]); // Llena la nueva tabla
+      setSolicitudesStream(prev => [nuevoRegistro, ...prev]);
       setToastMessage("Nueva solicitud de stream recibida.");
     } else {
       setFormulariosRecibidos(prev => [nuevoRegistro, ...prev]);
@@ -111,26 +108,47 @@ export default function AsistenteVirtualAdmin() {
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-4 md:p-8 font-sans text-gray-700 relative overflow-x-hidden">
       <div className="max-w-7xl mx-auto space-y-6">
-        <header className="bg-[#003952] text-white p-5 rounded-xl shadow-lg flex justify-between items-center gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="bg-white/10 p-2 rounded-full shrink-0"><ShieldCheck size={24} /></div>
-            <div className="truncate">
-              <p className="text-xl md:text-2xl font-bold block">Panel de administración del bot</p>
-              <p className="text-xs text-blue-100/70 truncate">Gestiona intenciones y respuestas de manera eficiente.</p>
-            </div>
-          </div>
-          <button onClick={() => handleOpenModal('create')} className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all font-semibold shrink-0">
-            <Plus size={16} /> Nueva intención
-          </button>
-        </header>
+        {/* HEADER RESPONSIVO CORREGIDO */}
+    <header className="bg-[#003952] text-white p-4 md:p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4">
+      
+      {/* Contenedor de Icono y Texto */}
+      <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
+        {/* Escudo: Un poco más pequeño en móvil para ahorrar espacio */}
+        <div className="bg-white/10 p-2 md:p-3 rounded-xl shrink-0">
+          <ShieldCheck size={20} className="md:w-6 md:h-6" />
+        </div>
+        
+        {/* Textos: Ajuste de tamaño y eliminación de truncado rígido en móvil */}
+        <div className="min-w-0">
+          <p className="text-base md:text-2xl font-black leading-tight tracking-tight">
+            Panel de administración
+          </p>
+          <p className="text-[10px] md:text-xs text-blue-100/60 font-medium uppercase tracking-wider">
+            Gestión de intenciones y respuestas
+          </p>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-          <main className="space-y-6">
-            <div className="flex gap-6 border-b border-gray-200 overflow-x-auto">
-              <button onClick={() => setActiveTab('intents')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'intents' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Bot size={16} /> Intenciones</button>
-              <button onClick={() => setActiveTab('forms')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'forms' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><FileText size={16} /> Formularios Recibidos</button>
-              <button onClick={() => setActiveTab('unresolved')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'unresolved' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><MessageSquare size={16} /> No resueltas</button>
-              <button onClick={() => setActiveTab('streams')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all ${activeTab === 'streams' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Play size={16} /> Streams Solicitados</button>
+      {/* Botón: Full width en móvil para facilitar el clic */}
+      <button 
+        onClick={() => handleOpenModal('create')} 
+        className="w-full sm:w-auto bg-white text-[#003952] hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all font-bold shadow-md active:scale-95"
+      >
+        <Plus size={18} strokeWidth={3} /> 
+        <span>Nueva intención</span>
+      </button>
+
+    </header>
+
+        {/* CONTENEDOR PRINCIPAL RESPONSIVO */}
+        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-6">
+          <main className="space-y-6 min-w-0">
+            {/* TABS CON SCROLL HORIZONTAL EN MÓVIL */}
+            <div className="flex gap-6 border-b border-gray-200 overflow-x-auto scrollbar-hide pb-0.5">
+              <button onClick={() => setActiveTab('intents')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all shrink-0 ${activeTab === 'intents' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Bot size={16} /> Intenciones</button>
+              <button onClick={() => setActiveTab('forms')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all shrink-0 ${activeTab === 'forms' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><FileText size={16} /> Formularios</button>
+              <button onClick={() => setActiveTab('unresolved')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all shrink-0 ${activeTab === 'unresolved' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><MessageSquare size={16} /> No resueltas</button>
+              <button onClick={() => setActiveTab('streams')} className={`pb-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-all shrink-0 ${activeTab === 'streams' ? 'border-b-2 border-[#003952] text-[#003952]' : 'text-gray-400'}`}><Play size={16} /> Streams</button>
             </div>
 
             <div className="min-h-[400px]">
@@ -139,7 +157,6 @@ export default function AsistenteVirtualAdmin() {
               {activeTab === 'streams' && (<FormularioStream data={solicitudesStream} onMarkAsRead={(id) => setSolicitudesStream(prev => prev.map(s => s.id === id ? {...s, estado: 'Aceptado'} : s))} />)}
               {activeTab === 'unresolved' && (
                 <UnresolvedTab 
-                  // Pasamos los IDs resueltos al componente
                   resolvedIds={resolvedQueryIds}
                   onCreateIntent={(msg, logId) => {
                     setModalMode('create');
@@ -150,7 +167,7 @@ export default function AsistenteVirtualAdmin() {
                       priority: 2, 
                       active: true, 
                       response: '',
-                      logId: logId // Vinculamos el log con la nueva intención
+                      logId: logId 
                     });
                     setIsModalOpen(true);
                   }} 
@@ -160,9 +177,10 @@ export default function AsistenteVirtualAdmin() {
             </div>
           </main>
 
+          {/* ASIDE RESPONSIVO (se mueve abajo en móviles) */}
           <aside className="space-y-6">
             {activeTab === 'forms' && (
-              <section className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-right-4">
+              <section className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 lg:slide-in-from-right-4">
                 <h3 className="text-sm font-bold text-[#003952] mb-3 flex items-center gap-2"><ShieldCheck size={16} /> Resumen de actividad</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-xs"><span className="text-gray-400">Total Intenciones</span><span className="font-bold">{intenciones.length}</span></div>
@@ -189,7 +207,14 @@ export default function AsistenteVirtualAdmin() {
 
       <ChatBot intencionesData={intenciones} onFormSubmit={handleFormReceived} onUnresolvedQuery={handleUnresolvedQuery} />
       <IntentsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} mode={modalMode} data={selectedData} />
-      {showToast && <div className="fixed bottom-10 right-10 bg-white border border-gray-100 shadow-2xl rounded-xl p-4 flex flex-col min-w-[250px] z-[200] animate-in slide-in-from-right duration-300"><p className="text-sm font-bold text-gray-800">Operación exitosa</p><p className="text-[12px] text-gray-500">{toastMessage}</p></div>}
+      
+      {/* TOAST RESPONSIVO */}
+      {showToast && (
+        <div className="fixed bottom-4 left-4 right-4 md:bottom-10 md:right-10 md:left-auto bg-white border border-gray-100 shadow-2xl rounded-xl p-4 flex flex-col min-w-[250px] z-[200] animate-in slide-in-from-bottom-10 md:slide-in-from-right duration-300">
+          <p className="text-sm font-bold text-gray-800">Operación exitosa</p>
+          <p className="text-[12px] text-gray-500">{toastMessage}</p>
+        </div>
+      )}
     </div>
   );
 }
